@@ -187,10 +187,62 @@ class SubscriptionResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('bill')
+                    ->label('Facturar')
+                    ->icon('heroicon-o-document-text')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->status === SubscriptionStatus::ACTIVE)
+                    ->action(function ($record) {
+                        return \DB::transaction(function () use ($record) {
+                            // Crear factura (invoice_number se genera automáticamente)
+                            $invoice = \App\Models\Invoice::create([
+                                'client_id' => $record->client_id,
+                                'issue_date' => now(),
+                                'due_date' => now()->addDays(30),
+                                'subtotal' => 0,
+                                'tax_percentage' => 0,
+                                'tax_amount' => 0,
+                                'total' => 0,
+                                'status' => 'draft',
+                            ]);
+                            
+                            // Agregar item
+                            $description = $record->service->name . " - " . $record->billing_cycle->label();
+                            $invoice->invoiceItems()->create([
+                                'description' => $description,
+                                'quantity' => 1,
+                                'unit_price' => $record->effective_price,
+                                'subtotal' => $record->effective_price,
+                                'itemable_type' => \App\Models\Subscription::class,
+                                'itemable_id' => $record->id,
+                            ]);
+                            
+                            // Actualizar próxima fecha de facturación
+                            $days = match($record->billing_cycle) {
+                                BillingCycle::MONTHLY => 30,
+                                BillingCycle::QUARTERLY => 90,
+                                BillingCycle::YEARLY => 365,
+                            };
+                            $record->next_billing_date = now()->addDays($days);
+                            $record->save();
+                            
+                            // Calcular totales
+                            $invoice->calculateTotals();
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('Factura generada')
+                                ->body("Factura {$invoice->invoice_number} creada. Próxima facturación: {$record->next_billing_date->format('d/m/Y')}")
+                                ->send();
+                            
+                            return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                        });
+                    })
+                    ->requiresConfirmation(),
                 Tables\Actions\Action::make('renew')
                     ->label('Renovar')
                     ->icon('heroicon-o-arrow-path')
-                    ->color('success')
+                    ->color('warning')
                     ->visible(fn ($record) => $record->status === SubscriptionStatus::ACTIVE)
                     ->action(function ($record) {
                         $days = match($record->billing_cycle) {

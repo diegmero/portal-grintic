@@ -86,7 +86,10 @@ class Invoice extends Model
     public static function generateInvoiceNumber(): string
     {
         $year = now()->year;
+        
+        // Usar lock para evitar race conditions
         $lastInvoice = self::whereYear('created_at', $year)
+                          ->lockForUpdate()
                           ->orderBy('id', 'desc')
                           ->first();
 

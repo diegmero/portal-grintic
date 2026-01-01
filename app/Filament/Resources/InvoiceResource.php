@@ -46,9 +46,9 @@ class InvoiceResource extends Resource
                         
                         Forms\Components\TextInput::make('invoice_number')
                             ->label('Número de Factura')
-                            ->default(fn () => Invoice::generateInvoiceNumber())
-                            ->required()
-                            ->unique(ignoreRecord: true)
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->hint('Se genera automáticamente')
                             ->maxLength(50),
                         
                         Forms\Components\Select::make('status')
@@ -295,9 +295,8 @@ class InvoiceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // Descomenta después de crear los RelationManagers
-            // RelationManagers\InvoiceItemsRelationManager::class,
-            // RelationManagers\PaymentsRelationManager::class,
+            RelationManagers\InvoiceItemsRelationManager::class,
+            RelationManagers\PaymentsRelationManager::class,
         ];
     }
 

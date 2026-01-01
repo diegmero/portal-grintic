@@ -210,10 +210,55 @@ class WorkLogResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('generate_invoice')
+                    ->label('Facturar')
+                    ->icon('heroicon-o-document-text')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->status === WorkLogStatus::PENDING)
+                    ->action(function ($record) {
+                        return \DB::transaction(function () use ($record) {
+                            // Crear factura (invoice_number se genera automáticamente)
+                            $invoice = \App\Models\Invoice::create([
+                                'client_id' => $record->client_id,
+                                'issue_date' => now(),
+                                'due_date' => now()->addDays(30),
+                                'subtotal' => 0,
+                                'tax_percentage' => 0,
+                                'tax_amount' => 0,
+                                'total' => 0,
+                                'status' => 'draft',
+                            ]);
+                            
+                            // Agregar item
+                            $invoice->invoiceItems()->create([
+                                'description' => $record->description . " ({$record->hours} hrs @ $" . number_format($record->hourly_rate, 2) . ")",
+                                'quantity' => 1,
+                                'unit_price' => $record->total,
+                                'subtotal' => $record->total,
+                                'itemable_type' => \App\Models\WorkLog::class,
+                                'itemable_id' => $record->id,
+                            ]);
+                            
+                            $record->status = WorkLogStatus::INVOICED;
+                            $record->save();
+                            
+                            // Calcular totales
+                            $invoice->calculateTotals();
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('Factura generada')
+                                ->body("Factura {$invoice->invoice_number} creada")
+                                ->send();
+                            
+                            return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                        });
+                    })
+                    ->requiresConfirmation(),
                 Tables\Actions\Action::make('mark_invoiced')
                     ->label('Marcar Facturado')
                     ->icon('heroicon-o-check-circle')
-                    ->color('success')
+                    ->color('warning')
                     ->visible(fn ($record) => $record->status === WorkLogStatus::PENDING)
                     ->action(function ($record) {
                         $record->status = WorkLogStatus::INVOICED;
@@ -229,10 +274,70 @@ class WorkLogResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('generate_invoice')
+                        ->label('Generar Factura')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->action(function ($records) {
+                            return \DB::transaction(function () use ($records) {
+                                // Verificar que todos sean del mismo cliente
+                                $clientIds = $records->pluck('client_id')->unique();
+                                if ($clientIds->count() > 1) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->danger()
+                                        ->title('Error')
+                                        ->body('Todos los registros deben ser del mismo cliente')
+                                        ->send();
+                                    return;
+                                }
+                                
+                                $client = $records->first()->client;
+                                
+                                // Crear factura (invoice_number se genera automáticamente)
+                                $invoice = \App\Models\Invoice::create([
+                                    'client_id' => $client->id,
+                                    'issue_date' => now(),
+                                    'due_date' => now()->addDays(30),
+                                    'subtotal' => 0,
+                                    'tax_percentage' => 0,
+                                    'tax_amount' => 0,
+                                    'total' => 0,
+                                    'status' => 'draft',
+                                ]);
+                                
+                                // Agregar items
+                                foreach ($records as $workLog) {
+                                    $invoice->invoiceItems()->create([
+                                        'description' => $workLog->description . " ({$workLog->hours} hrs @ $" . number_format($workLog->hourly_rate, 2) . ")",
+                                        'quantity' => 1,
+                                        'unit_price' => $workLog->total,
+                                        'subtotal' => $workLog->total,
+                                        'itemable_type' => \App\Models\WorkLog::class,
+                                        'itemable_id' => $workLog->id,
+                                    ]);
+                                    
+                                    $workLog->status = WorkLogStatus::INVOICED;
+                                    $workLog->save();
+                                }
+                                
+                                // Calcular totales
+                                $invoice->calculateTotals();
+                                
+                                \Filament\Notifications\Notification::make()
+                                    ->success()
+                                    ->title('Factura generada')
+                                    ->body("Factura {$invoice->invoice_number} creada con {$records->count()} items")
+                                    ->send();
+                                
+                                return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                            });
+                        })
+                        ->requiresConfirmation()
+                        ->deselectRecordsAfterCompletion(),
                     Tables\Actions\BulkAction::make('mark_invoiced')
                         ->label('Marcar como Facturado')
                         ->icon('heroicon-o-check-circle')
-                        ->color('success')
+                        ->color('warning')
                         ->action(function ($records) {
                             $count = $records->count();
                             $records->each(function ($record) {

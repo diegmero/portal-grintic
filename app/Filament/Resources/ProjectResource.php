@@ -129,6 +129,53 @@ class ProjectResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('bill')
+                    ->label('Facturar Proyecto')
+                    ->icon('heroicon-o-document-text')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->status === ProjectStatus::DONE)
+                    ->action(function ($record) {
+                        return \DB::transaction(function () use ($record) {
+                            // Crear factura (invoice_number se genera automáticamente)
+                            $invoice = \App\Models\Invoice::create([
+                                'client_id' => $record->client_id,
+                                'issue_date' => now(),
+                                'due_date' => now()->addDays(30),
+                                'subtotal' => 0,
+                                'tax_percentage' => 0,
+                                'tax_amount' => 0,
+                                'total' => 0,
+                                'status' => 'draft',
+                            ]);
+                            
+                            // Agregar item
+                            $description = "Proyecto: {$record->name}";
+                            if ($record->description) {
+                                $description .= " - {$record->description}";
+                            }
+                            
+                            $invoice->invoiceItems()->create([
+                                'description' => $description,
+                                'quantity' => 1,
+                                'unit_price' => $record->total_budget,
+                                'subtotal' => $record->total_budget,
+                                'itemable_type' => \App\Models\Project::class,
+                                'itemable_id' => $record->id,
+                            ]);
+                            
+                            // Calcular totales
+                            $invoice->calculateTotals();
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('Factura generada')
+                                ->body("Factura {$invoice->invoice_number} creada para el proyecto")
+                                ->send();
+                            
+                            return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                        });
+                    })
+                    ->requiresConfirmation(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
