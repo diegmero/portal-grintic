@@ -1,0 +1,13 @@
+[90m= [39m[34;4mApp\Models\Contact[39;24m {#7405
+    [34mid[39m: [35m1[39m,
+    [34mclient_id[39m: [35m1[39m,
+    [34mname[39m: "[32mEulah Ernser[39m",
+    [34memail[39m: "[32mbailey.clarissa@example.org[39m",
+    [34mphone[39m: "[32m(518) 546-7036[39m",
+    #[33mpassword[39m: "[32m$2y$12$WkttyHtt72MyxhzinI2dcexNPNHByZHzoROfeTn2CorNIBDYI6HFq[39m",
+    [34mis_primary[39m: [35m1[39m,
+    [34mcreated_at[39m: "[32m2026-01-01 20:31:05[39m",
+    [34mupdated_at[39m: "[32m2026-01-01 20:31:05[39m",
+    [34mdeleted_at[39m: [36mnull[39m,
+  }
+

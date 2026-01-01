@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\BillingCycle;
+use App\Enums\SubscriptionStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Subscription extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'client_id',
+        'service_id',
+        'custom_price',
+        'billing_cycle',
+        'next_billing_date',
+        'started_at',
+        'cancelled_at',
+        'status',
+    ];
+
+    protected $casts = [
+        'billing_cycle' => BillingCycle::class,
+        'status' => SubscriptionStatus::class,
+        'custom_price' => 'decimal:2',
+        'next_billing_date' => 'date',
+        'started_at' => 'date',
+        'cancelled_at' => 'date',
+    ];
+
+    // Relaciones
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    public function invoiceItems(): MorphMany
+    {
+        return $this->morphMany(InvoiceItem::class, 'itemable');
+    }
+
+    // Accessor para obtener el precio efectivo
+    public function getEffectivePriceAttribute()
+    {
+        return $this->custom_price ?? $this->service->base_price;
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('status', SubscriptionStatus::ACTIVE);
+    }
+
+    public function scopeDueForBilling($query)
+    {
+        return $query->where('status', SubscriptionStatus::ACTIVE)
+                     ->whereDate('next_billing_date', '<=', now());
+    }
+}
