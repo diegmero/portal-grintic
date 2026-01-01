@@ -152,6 +152,7 @@ class ClientResource extends Resource
             RelationManagers\ContactsRelationManager::class,
             RelationManagers\AssetsRelationManager::class,
             RelationManagers\SubscriptionsRelationManager::class,
+            RelationManagers\ProjectsRelationManager::class,
         ];
     }
 
