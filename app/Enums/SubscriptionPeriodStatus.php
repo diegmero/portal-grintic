@@ -10,6 +10,7 @@ enum SubscriptionPeriodStatus: string implements HasLabel, HasColor
     case PENDING = 'pending';
     case INVOICED = 'invoiced';
     case PAID = 'paid';
+    case PARTIALLY_PAID = 'partially_paid';
     case CANCELLED = 'cancelled';
 
     public function getLabel(): ?string
@@ -18,6 +19,7 @@ enum SubscriptionPeriodStatus: string implements HasLabel, HasColor
             self::PENDING => 'Pendiente',
             self::INVOICED => 'Facturado',
             self::PAID => 'Pagado',
+            self::PARTIALLY_PAID => 'Pago Parcial',
             self::CANCELLED => 'Cancelado',
         };
     }
@@ -28,6 +30,7 @@ enum SubscriptionPeriodStatus: string implements HasLabel, HasColor
             self::PENDING => 'warning',
             self::INVOICED => 'info',
             self::PAID => 'success',
+            self::PARTIALLY_PAID => 'warning',
             self::CANCELLED => 'danger',
         };
     }

@@ -2,24 +2,33 @@
 
 namespace App\Enums;
 
-enum WorkLogStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum WorkLogStatus: string implements HasLabel, HasColor
 {
     case PENDING = 'pending';
     case INVOICED = 'invoiced';
+    case PAID = 'paid';
+    case PARTIALLY_PAID = 'partially_paid';
 
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match($this) {
             self::PENDING => 'Pendiente',
             self::INVOICED => 'Facturado',
+            self::PAID => 'Pagado',
+            self::PARTIALLY_PAID => 'Pago Parcial',
         };
     }
 
-    public function color(): string
+    public function getColor(): string|array|null
     {
         return match($this) {
             self::PENDING => 'warning',
-            self::INVOICED => 'success',
+            self::INVOICED => 'info',
+            self::PAID => 'success',
+            self::PARTIALLY_PAID => 'warning',
         };
     }
 }

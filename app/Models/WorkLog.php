@@ -30,6 +30,31 @@ class WorkLog extends Model
         'worked_at' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (WorkLog $workLog) {
+            if ($workLog->status !== WorkLogStatus::PENDING) {
+                // Si es soft delete, permitimos "archivar" si es necesario? 
+                // El usuario pidió "evitar que esto pueda pasar", asumo bloqueo total.
+                // Si se usa ForceDelete, definitivamente bloquear.
+                
+                // Pero wait, Filament usa SoftDeletes por defecto si el modelo lo tiene.
+                // SoftDeleting un registro facturado también es malo porque desaparece de la UI.
+                
+                if (! $workLog->isForceDeleting()) {
+                    // Es un soft delete. Bloquear también para evitar inconsistencias visuales.
+                     \Filament\Notifications\Notification::make()
+                        ->danger()
+                        ->title('Operación Bloqueada')
+                        ->body('No se puede eliminar un registro que ya ha sido facturado o pagado. Debes anular la factura primero.')
+                        ->send();
+                        
+                     return false;
+                }
+            }
+        });
+    }
+
     // Relaciones
     public function client(): BelongsTo
     {
@@ -44,6 +69,11 @@ class WorkLog extends Model
     public function invoiceItems(): MorphMany
     {
         return $this->morphMany(InvoiceItem::class, 'itemable');
+    }
+
+    public function invoiceItem(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(InvoiceItem::class, 'itemable')->latestOfMany();
     }
 
     // Accessor para calcular total

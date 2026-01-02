@@ -32,6 +32,36 @@ class Subscription extends Model
         'cancelled_at' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Subscription $subscription) {
+            
+            // Regla 1: Estado Activo o Pausado
+            if (in_array($subscription->status, [SubscriptionStatus::ACTIVE, SubscriptionStatus::PAUSED])) {
+                 if (! $subscription->isForceDeleting()) {
+                     \Filament\Notifications\Notification::make()
+                        ->danger()
+                        ->title('Operación Bloqueada')
+                        ->body('No se puede eliminar una suscripción Activa o Pausada. Cancélela primero.')
+                        ->send();
+                     return false;
+                }
+            }
+
+            // Regla 2: Historia Financiera
+            if ($subscription->periods()->whereNotNull('invoice_id')->exists()) {
+                 if (! $subscription->isForceDeleting()) {
+                     \Filament\Notifications\Notification::make()
+                        ->danger()
+                        ->title('Operación Bloqueada')
+                        ->body('No se puede eliminar una suscripción con historial de facturación.')
+                        ->send();
+                     return false;
+                }
+            }
+        });
+    }
+
     // Relaciones
     public function client(): BelongsTo
     {

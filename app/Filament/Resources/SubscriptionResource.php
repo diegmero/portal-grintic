@@ -179,7 +179,28 @@ class SubscriptionResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function (\Illuminate\Database\Eloquent\Collection $records, Tables\Actions\DeleteBulkAction $action) {
+                            foreach ($records as $record) {
+                                if (in_array($record->status, [\App\Enums\SubscriptionStatus::ACTIVE, \App\Enums\SubscriptionStatus::PAUSED])) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->danger()
+                                        ->title('Operación Bloqueada')
+                                        ->body("La suscripción de {$record->client->company_name} está Activa/Pausada. Cancélela primero.")
+                                        ->send();
+                                    $action->halt();
+                                }
+                                
+                                if ($record->periods()->whereNotNull('invoice_id')->exists()) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->danger()
+                                        ->title('Operación Bloqueada')
+                                        ->body("La suscripción de {$record->client->company_name} tiene historial de facturación.")
+                                        ->send();
+                                    $action->halt();
+                                }
+                            }
+                        }),
                 ]),
             ])
             ->defaultSort('started_at', 'desc');

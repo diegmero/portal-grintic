@@ -9,4 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateWorkLog extends CreateRecord
 {
     protected static string $resource = WorkLogResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

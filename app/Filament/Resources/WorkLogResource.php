@@ -33,95 +33,107 @@ class WorkLogResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Información del Trabajo')
+                Forms\Components\Group::make()
                     ->schema([
-                        Forms\Components\Select::make('client_id')
-                            ->label('Cliente')
-                            ->relationship('client', 'company_name')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->columnSpan('full'),
-                        
-                        Forms\Components\Select::make('service_id')
-                            ->label('Servicio')
-                            ->relationship('service', 'name', function ($query) {
-                                $query->where('type', 'hourly');
-                            })
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                if ($state) {
-                                    $service = \App\Models\Service::find($state);
-                                    $set('hourly_rate', $service->base_price);
-                                }
-                            }),
-                        
-                        Forms\Components\DatePicker::make('worked_at')
-                            ->label('Fecha del Trabajo')
-                            ->default(now())
-                            ->required()
-                            ->maxDate(now()),
+                        Forms\Components\Section::make('Detalle Económico')
+                            ->schema([
+                                Forms\Components\TextInput::make('hours')
+                                    ->label('Horas')
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(0.25)
+                                    ->step(0.25)
+                                    ->suffix('hrs')
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                        $hours = (float) $state;
+                                        $rate = (float) $get('hourly_rate');
+                                        $set('calculated_total', $hours * $rate);
+                                    })
+                                    ->disabled(fn ($record) => $record && $record->status !== WorkLogStatus::PENDING),
+                                
+                                Forms\Components\TextInput::make('hourly_rate')
+                                    ->label('Tarifa/Hora')
+                                    ->numeric()
+                                    ->required()
+                                    ->prefix('$')
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                        $hours = (float) $get('hours');
+                                        $rate = (float) $state;
+                                        $set('calculated_total', $hours * $rate);
+                                    })
+                                    ->disabled(fn ($record) => $record && $record->status !== WorkLogStatus::PENDING),
+                                
+                                Forms\Components\Placeholder::make('calculated_total')
+                                    ->label('Total')
+                                    ->content(function (Forms\Get $get) {
+                                        $hours = (float) ($get('hours') ?? 0);
+                                        $rate = (float) ($get('hourly_rate') ?? 0);
+                                        $total = $hours * $rate;
+                                        return '$' . number_format($total, 2);
+                                    }),
+                            ])
+                            ->columns(3),
+
+                        Forms\Components\Section::make('Descripción')
+                            ->schema([
+                                Forms\Components\Textarea::make('description')
+                                    ->hiddenLabel()
+                                    ->placeholder('Describe el trabajo realizado...')
+                                    ->required()
+                                    ->rows(5),
+                            ]),
                     ])
-                    ->columns(2),
-                
-                Forms\Components\Section::make('Horas y Tarifa')
+                    ->columnSpan(2),
+
+                Forms\Components\Group::make()
                     ->schema([
-                        Forms\Components\TextInput::make('hours')
-                            ->label('Horas Trabajadas')
-                            ->numeric()
-                            ->required()
-                            ->minValue(0.25)
-                            ->step(0.25)
-                            ->suffix('hrs')
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                $hours = (float) $state;
-                                $rate = (float) $get('hourly_rate');
-                                $set('calculated_total', $hours * $rate);
-                            }),
-                        
-                        Forms\Components\TextInput::make('hourly_rate')
-                            ->label('Tarifa por Hora')
-                            ->numeric()
-                            ->required()
-                            ->prefix('$')
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                $hours = (float) $get('hours');
-                                $rate = (float) $state;
-                                $set('calculated_total', $hours * $rate);
-                            }),
-                        
-                        Forms\Components\Placeholder::make('calculated_total')
-                            ->label('Total Calculado')
-                            ->content(function (Forms\Get $get) {
-                                $hours = (float) ($get('hours') ?? 0);
-                                $rate = (float) ($get('hourly_rate') ?? 0);
-                                $total = $hours * $rate;
-                                return '$' . number_format($total, 2);
-                            }),
+                        Forms\Components\Section::make('Contexto del Cliente')
+                            ->schema([
+                                Forms\Components\Select::make('client_id')
+                                    ->label('Cliente')
+                                    ->relationship('client', 'company_name')
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->disabled(fn ($record) => $record && $record->status !== WorkLogStatus::PENDING),
+                                
+                                Forms\Components\Select::make('service_id')
+                                    ->label('Servicio')
+                                    ->relationship('service', 'name', function ($query) {
+                                        $query->where('type', 'hourly');
+                                    })
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        if ($state) {
+                                            $service = \App\Models\Service::find($state);
+                                            $set('hourly_rate', $service->base_price);
+                                        }
+                                    })
+                                    ->disabled(fn ($record) => $record && $record->status !== WorkLogStatus::PENDING),
+                                
+                                Forms\Components\DatePicker::make('worked_at')
+                                    ->label('Fecha')
+                                    ->default(now())
+                                    ->required()
+                                    ->maxDate(now())
+                                    ->disabled(fn ($record) => $record && $record->status !== WorkLogStatus::PENDING),
+
+                                Forms\Components\Select::make('status')
+                                    ->label('Estado')
+                                    ->options(WorkLogStatus::class)
+                                    ->default(WorkLogStatus::PENDING)
+                                    ->required()
+                                    ->disabled(fn ($record) => $record && $record->status !== WorkLogStatus::PENDING),
+                            ]),
                     ])
-                    ->columns(3),
-                
-                Forms\Components\Section::make('Descripción del Trabajo')
-                    ->schema([
-                        Forms\Components\Textarea::make('description')
-                            ->label('Descripción')
-                            ->required()
-                            ->rows(4)
-                            ->columnSpan('full')
-                            ->hint('Describe el trabajo realizado'),
-                        
-                        Forms\Components\Select::make('status')
-                            ->label('Estado')
-                            ->options(WorkLogStatus::class)
-                            ->default(WorkLogStatus::PENDING)
-                            ->required(),
-                    ]),
-            ]);
+                    ->columnSpan(1),
+            ])
+            ->columns(3);
     }
 
     public static function table(Table $table): Table
@@ -204,8 +216,7 @@ class WorkLogResource extends Resource
                 Tables\Filters\Filter::make('pending')
                     ->label('Solo Pendientes')
                     ->query(fn ($query) => $query->pending())
-                    ->toggle()
-                    ->default(),
+                    ->toggle(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -226,7 +237,7 @@ class WorkLogResource extends Resource
                                 'tax_percentage' => 0,
                                 'tax_amount' => 0,
                                 'total' => 0,
-                                'status' => 'draft',
+                                'status' => \App\Enums\InvoiceStatus::SENT,
                             ]);
                             
                             // Agregar item
@@ -251,107 +262,28 @@ class WorkLogResource extends Resource
                                 ->body("Factura {$invoice->invoice_number} creada")
                                 ->send();
                             
-                            return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                            return redirect()->route('filament.admin.resources.invoices.view', ['record' => $invoice]);
                         });
                     })
                     ->requiresConfirmation(),
-                Tables\Actions\Action::make('mark_invoiced')
-                    ->label('Marcar Facturado')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('warning')
-                    ->visible(fn ($record) => $record->status === WorkLogStatus::PENDING)
-                    ->action(function ($record) {
-                        $record->status = WorkLogStatus::INVOICED;
-                        $record->save();
-                        
-                        \Filament\Notifications\Notification::make()
-                            ->success()
-                            ->title('Marcado como facturado')
-                            ->send();
-                    })
-                    ->requiresConfirmation(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('generate_invoice')
-                        ->label('Generar Factura')
-                        ->icon('heroicon-o-document-text')
-                        ->color('success')
-                        ->action(function ($records) {
-                            return \DB::transaction(function () use ($records) {
-                                // Verificar que todos sean del mismo cliente
-                                $clientIds = $records->pluck('client_id')->unique();
-                                if ($clientIds->count() > 1) {
-                                    \Filament\Notifications\Notification::make()
-                                        ->danger()
-                                        ->title('Error')
-                                        ->body('Todos los registros deben ser del mismo cliente')
-                                        ->send();
-                                    return;
-                                }
-                                
-                                $client = $records->first()->client;
-                                
-                                // Crear factura (invoice_number se genera automáticamente)
-                                $invoice = \App\Models\Invoice::create([
-                                    'client_id' => $client->id,
-                                    'issue_date' => now(),
-                                    'due_date' => now()->addDays(30),
-                                    'subtotal' => 0,
-                                    'tax_percentage' => 0,
-                                    'tax_amount' => 0,
-                                    'total' => 0,
-                                    'status' => 'draft',
-                                ]);
-                                
-                                // Agregar items
-                                foreach ($records as $workLog) {
-                                    $invoice->invoiceItems()->create([
-                                        'description' => $workLog->description . " ({$workLog->hours} hrs @ $" . number_format($workLog->hourly_rate, 2) . ")",
-                                        'quantity' => 1,
-                                        'unit_price' => $workLog->total,
-                                        'subtotal' => $workLog->total,
-                                        'itemable_type' => \App\Models\WorkLog::class,
-                                        'itemable_id' => $workLog->id,
-                                    ]);
-                                    
-                                    $workLog->status = WorkLogStatus::INVOICED;
-                                    $workLog->save();
-                                }
-                                
-                                // Calcular totales
-                                $invoice->calculateTotals();
-                                
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function (\Illuminate\Database\Eloquent\Collection $records, Tables\Actions\DeleteBulkAction $action) {
+                            if ($records->contains(fn ($record) => $record->status !== \App\Enums\WorkLogStatus::PENDING)) {
                                 \Filament\Notifications\Notification::make()
-                                    ->success()
-                                    ->title('Factura generada')
-                                    ->body("Factura {$invoice->invoice_number} creada con {$records->count()} items")
+                                    ->danger()
+                                    ->title('Operación Bloqueada')
+                                    ->body('No puedes eliminar registros que ya han sido facturados o pagados.')
                                     ->send();
                                 
-                                return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
-                            });
-                        })
-                        ->requiresConfirmation()
-                        ->deselectRecordsAfterCompletion(),
-                    Tables\Actions\BulkAction::make('mark_invoiced')
-                        ->label('Marcar como Facturado')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('warning')
-                        ->action(function ($records) {
-                            $count = $records->count();
-                            $records->each(function ($record) {
-                                $record->status = WorkLogStatus::INVOICED;
-                                $record->save();
-                            });
-                            
-                            \Filament\Notifications\Notification::make()
-                                ->success()
-                                ->title("$count registros marcados como facturados")
-                                ->send();
-                        })
-                        ->requiresConfirmation()
-                        ->deselectRecordsAfterCompletion(),
+                                $action->halt();
+                            }
+                        }),
+
+
                 ]),
             ])
             ->defaultSort('worked_at', 'desc');
@@ -361,44 +293,70 @@ class WorkLogResource extends Resource
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Información del Trabajo')
+                Infolists\Components\Group::make()
                     ->schema([
-                        Infolists\Components\TextEntry::make('client.company_name')
-                            ->label('Cliente'),
-                        Infolists\Components\TextEntry::make('service.name')
-                            ->label('Servicio'),
-                        Infolists\Components\TextEntry::make('worked_at')
-                            ->label('Fecha del Trabajo')
-                            ->date('d/m/Y'),
-                        Infolists\Components\TextEntry::make('status')
-                            ->label('Estado')
-                            ->badge(),
+                        Infolists\Components\Section::make('Detalle Económico')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('hours')
+                                    ->label('Horas')
+                                    ->suffix(' hrs'),
+                                Infolists\Components\TextEntry::make('hourly_rate')
+                                    ->label('Tarifa/Hora')
+                                    ->money('USD'),
+                                Infolists\Components\TextEntry::make('total')
+                                    ->label('Total')
+                                    ->money('USD')
+                                    ->weight('bold')
+                                    ->size('lg'),
+                            ])
+                            ->columns(3),
+
+                        Infolists\Components\Section::make('Descripción del Trabajo')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('description')
+                                    ->hiddenLabel()
+                                    ->columnSpanFull(),
+                            ]),
                     ])
-                    ->columns(2),
-                
-                Infolists\Components\Section::make('Detalles de Facturación')
+                    ->columnSpan(2),
+
+                Infolists\Components\Group::make()
                     ->schema([
-                        Infolists\Components\TextEntry::make('hours')
-                            ->label('Horas Trabajadas')
-                            ->suffix(' hrs'),
-                        Infolists\Components\TextEntry::make('hourly_rate')
-                            ->label('Tarifa por Hora')
-                            ->money('USD'),
-                        Infolists\Components\TextEntry::make('total')
-                            ->label('Total')
-                            ->money('USD')
-                            ->weight('bold')
-                            ->size('lg'),
+                        Infolists\Components\Section::make('Contexto del Cliente')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('client.company_name')
+                                    ->label('Cliente'),
+                                Infolists\Components\TextEntry::make('service.name')
+                                    ->label('Servicio'),
+                                Infolists\Components\TextEntry::make('worked_at')
+                                    ->label('Fecha')
+                                    ->date('d/m/Y'),
+                                Infolists\Components\TextEntry::make('status')
+                                    ->label('Estado')
+                                    ->badge(),
+                            ]),
+
+                        Infolists\Components\Section::make('Facturación')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('invoiceItem.invoice.invoice_number')
+                                    ->label('Nº Factura')
+                                    ->icon('heroicon-o-document-text')
+                                    ->color('primary')
+                                    ->url(fn ($record) => $record->invoiceItem?->invoice ? route('filament.admin.resources.invoices.view', ['record' => $record->invoiceItem->invoice]) : null),
+                                
+                                Infolists\Components\TextEntry::make('invoiceItem.invoice.status')
+                                    ->label('Estado')
+                                    ->badge(),
+                                
+                                Infolists\Components\TextEntry::make('invoiceItem.invoice.total')
+                                    ->label('Monto')
+                                    ->money('USD'),
+                            ])
+                            ->visible(fn ($record) => $record->invoiceItem !== null),
                     ])
-                    ->columns(3),
-                
-                Infolists\Components\Section::make('Descripción')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('description')
-                            ->label('Descripción del Trabajo')
-                            ->columnSpanFull(),
-                    ]),
-            ]);
+                    ->columnSpan(1),
+            ])
+            ->columns(3);
     }
 
     public static function getPages(): array

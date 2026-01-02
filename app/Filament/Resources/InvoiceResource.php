@@ -36,20 +36,19 @@ class InvoiceResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Información de la Factura')
                     ->schema([
+                        Forms\Components\TextInput::make('invoice_number')
+                            ->label('Número de Factura')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->hint('Auto')
+                            ->maxLength(50),
+                        
                         Forms\Components\Select::make('client_id')
                             ->label('Cliente')
                             ->relationship('client', 'company_name')
                             ->required()
                             ->searchable()
-                            ->preload()
-                            ->columnSpan('full'),
-                        
-                        Forms\Components\TextInput::make('invoice_number')
-                            ->label('Número de Factura')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->hint('Se genera automáticamente')
-                            ->maxLength(50),
+                            ->preload(),
                         
                         Forms\Components\Select::make('status')
                             ->label('Estado')
@@ -57,7 +56,8 @@ class InvoiceResource extends Resource
                             ->default(InvoiceStatus::DRAFT)
                             ->required(),
                     ])
-                    ->columns(2),
+                    ->columns(3)
+                    ->columnSpan(1),
                 
                 Forms\Components\Section::make('Fechas')
                     ->schema([
@@ -78,7 +78,8 @@ class InvoiceResource extends Resource
                             ->required()
                             ->minDate(fn (Forms\Get $get) => $get('issue_date')),
                     ])
-                    ->columns(2),
+                    ->columns(2)
+                    ->columnSpan(1),
                 
                 Forms\Components\Section::make('Totales')
                     ->schema([
@@ -116,7 +117,8 @@ class InvoiceResource extends Resource
                             ->disabled()
                             ->dehydrated(),
                     ])
-                    ->columns(4),
+                    ->columns(4)
+                    ->columnSpan(2),
                 
                 Forms\Components\Section::make('Notas')
                     ->schema([
@@ -124,8 +126,10 @@ class InvoiceResource extends Resource
                             ->label('Notas')
                             ->rows(3)
                             ->columnSpan('full'),
-                    ]),
-            ]);
+                    ])
+                    ->columnSpan(2),
+            ])
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
@@ -178,7 +182,7 @@ class InvoiceResource extends Resource
                 
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Estado')
-                    ->options(InvoiceStatus::class),
+                    ->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($status) => [$status->value => $status->getLabel()])->toArray()),
                 
                 Tables\Filters\Filter::make('overdue')
                     ->label('Vencidas')
@@ -289,7 +293,8 @@ class InvoiceResource extends Resource
                             ->label('Estado')
                             ->badge(),
                     ])
-                    ->columns(3),
+                    ->columns(3)
+                    ->columnSpan(1),
                 
                 Infolists\Components\Section::make('Fechas')
                     ->schema([
@@ -300,7 +305,8 @@ class InvoiceResource extends Resource
                             ->label('Fecha de Vencimiento')
                             ->date('d/m/Y'),
                     ])
-                    ->columns(2),
+                    ->columns(2)
+                    ->columnSpan(1),
                 
                 Infolists\Components\Section::make('Totales')
                     ->schema([
@@ -321,7 +327,8 @@ class InvoiceResource extends Resource
                             ->money('USD')
                             ->color('success'),
                     ])
-                    ->columns(4),
+                    ->columns(4)
+                    ->columnSpan(2),
                 
                 Infolists\Components\Section::make('Notas')
                     ->schema([
@@ -329,8 +336,10 @@ class InvoiceResource extends Resource
                             ->label('Notas')
                             ->columnSpanFull()
                             ->visible(fn ($record) => $record->notes),
-                    ]),
-            ]);
+                    ])
+                    ->columnSpan(2),
+            ])
+            ->columns(2);
     }
 
     public static function getRelations(): array

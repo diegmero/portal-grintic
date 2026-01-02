@@ -30,6 +30,23 @@ class SubscriptionPeriod extends Model
         'amount' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (SubscriptionPeriod $period) {
+            if ($period->status !== SubscriptionPeriodStatus::PENDING || $period->invoice_id) {
+                if (! $period->isForceDeleting()) {
+                     \Filament\Notifications\Notification::make()
+                        ->danger()
+                        ->title('Operación Bloqueada')
+                        ->body('No se puede eliminar un período que ya ha sido facturado o pagado. Debes anular la factura primero.')
+                        ->send();
+                        
+                     return false;
+                }
+            }
+        });
+    }
+
     // Relaciones
     public function subscription(): BelongsTo
     {

@@ -44,5 +44,22 @@ class InvoiceItem extends Model
         static::saving(function ($item) {
             $item->subtotal = $item->quantity * $item->unit_price;
         });
+
+        static::deleting(function ($item) {
+            if ($item->itemable_type === \App\Models\SubscriptionPeriod::class && $item->itemable_id) {
+                $period = \App\Models\SubscriptionPeriod::find($item->itemable_id);
+                if ($period) {
+                    $period->invoice_id = null;
+                    $period->status = \App\Enums\SubscriptionPeriodStatus::PENDING;
+                    $period->save();
+                }
+            } elseif ($item->itemable_type === \App\Models\WorkLog::class && $item->itemable_id) {
+                $workLog = \App\Models\WorkLog::find($item->itemable_id);
+                if ($workLog) {
+                    $workLog->status = \App\Enums\WorkLogStatus::PENDING;
+                    $workLog->save();
+                }
+            }
+        });
     }
 }

@@ -31,12 +31,14 @@ class PeriodsRelationManager extends RelationManager
                     ->schema([
                         Forms\Components\DatePicker::make('period_start')
                             ->label('Inicio del Período')
-                            ->required(),
+                            ->required()
+                            ->disabled(fn ($record) => $record && $record->invoice_id),
                         
                         Forms\Components\DatePicker::make('period_end')
                             ->label('Fin del Período')
                             ->required()
-                            ->after('period_start'),
+                            ->after('period_start')
+                            ->disabled(fn ($record) => $record && $record->invoice_id),
                         
                         Forms\Components\Placeholder::make('amount_display')
                             ->label('Monto del Período')
@@ -45,9 +47,10 @@ class PeriodsRelationManager extends RelationManager
                         
                         Forms\Components\Select::make('status')
                             ->label('Estado')
-                            ->options(SubscriptionPeriodStatus::class)
+                            ->options(collect(SubscriptionPeriodStatus::cases())->mapWithKeys(fn ($status) => [$status->value => $status->getLabel()])->toArray())
                             ->default(SubscriptionPeriodStatus::PENDING)
-                            ->required(),
+                            ->required()
+                            ->disabled(fn ($record) => $record && $record->invoice_id),
                     ])
                     ->columns(2),
                 
@@ -133,7 +136,7 @@ class PeriodsRelationManager extends RelationManager
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Estado')
-                    ->options(SubscriptionPeriodStatus::class),
+                    ->options(collect(SubscriptionPeriodStatus::cases())->mapWithKeys(fn ($status) => [$status->value => $status->getLabel()])->toArray()),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
@@ -166,7 +169,7 @@ class PeriodsRelationManager extends RelationManager
                                 'tax_percentage' => 0,
                                 'tax_amount' => 0,
                                 'total' => 0,
-                                'status' => 'draft',
+                                'status' => \App\Enums\InvoiceStatus::SENT,
                             ]);
                             
                             // Agregar item
@@ -245,7 +248,7 @@ class PeriodsRelationManager extends RelationManager
                                 'tax_percentage' => 0,
                                 'tax_amount' => 0,
                                 'total' => 0,
-                                'status' => 'draft',
+                                'status' => \App\Enums\InvoiceStatus::SENT,
                             ]);
                             
                             // 2. Agregar item
@@ -292,26 +295,34 @@ class PeriodsRelationManager extends RelationManager
                         });
                     }),
                 
-                Tables\Actions\EditAction::make()
-                    ->hiddenLabel()
-                    ->visible(false),
+                Tables\Actions\EditAction::make(),
                 
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn ($record) => !$record->invoice_id)
-                    ->tooltip(fn ($record) => $record->invoice_id ? 'No se puede eliminar: tiene factura vinculada' : null),
+                    ->tooltip(fn ($record) => $record->invoice_id ? 'No se puede eliminar: tiene factura vinculada' : null)
+                    ->before(function ($record, $action) {
+                        if ($record->status !== \App\Enums\SubscriptionPeriodStatus::PENDING || $record->invoice_id) {
+                                \Filament\Notifications\Notification::make()
+                                ->danger()
+                                ->title('Operación Bloqueada')
+                                ->body('No se puede eliminar un período que ya ha sido facturado o pagado. Debes anular la factura primero.')
+                                ->send();
+                            $action->halt();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function ($records) {
-                            $hasInvoiced = $records->filter(fn ($r) => $r->invoice_id)->count();
+                        ->before(function ($records, $action) {
+                            $hasInvoiced = $records->filter(fn ($r) => $r->invoice_id || $r->status !== \App\Enums\SubscriptionPeriodStatus::PENDING)->count();
                             if ($hasInvoiced > 0) {
                                 \Filament\Notifications\Notification::make()
                                     ->danger()
-                                    ->title('No se pueden eliminar')
-                                    ->body("$hasInvoiced período(s) tienen facturas vinculadas")
+                                    ->title('Operación Bloqueada')
+                                    ->body("No puedes eliminar registros que ya han sido facturados o pagados.")
                                     ->send();
-                                return false;
+                                $action->halt();
                             }
                         }),
                 ]),

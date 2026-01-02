@@ -14,6 +14,12 @@ class EditInvoice extends EditRecord
     
     protected static string $view = 'filament.resources.invoice-resource.pages.edit-invoice';
 
+    #[\Livewire\Attributes\On('$refresh')]
+    public function refreshRecord(): void
+    {
+        $this->record->refresh();
+    }
+
     protected function getHeaderActions(): array
     {
         return [

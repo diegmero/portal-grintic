@@ -14,7 +14,18 @@ class EditWorkLog extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->visible(fn ($record) => $record->status === \App\Enums\WorkLogStatus::PENDING)
+                ->before(function ($record, $action) {
+                    if ($record->status !== \App\Enums\WorkLogStatus::PENDING) {
+                         \Filament\Notifications\Notification::make()
+                            ->danger()
+                            ->title('No se puede eliminar')
+                            ->body('Registro facturado/pagado.')
+                            ->send();
+                        $action->halt();
+                    }
+                }),
         ];
     }
 }

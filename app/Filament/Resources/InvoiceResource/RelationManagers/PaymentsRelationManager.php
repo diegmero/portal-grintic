@@ -30,7 +30,14 @@ class PaymentsRelationManager extends RelationManager
                     ->required()
                     ->prefix('$')
                     ->minValue(0.01)
-                    ->maxValue(fn () => $this->getOwnerRecord()->total),
+                    ->maxValue(function ($record) {
+                        $invoice = $this->getOwnerRecord();
+                        $alreadyPaid = $invoice->payments()
+                            ->where('id', '!=', $record?->id)
+                            ->sum('amount');
+                        
+                        return max(0, round($invoice->total - $alreadyPaid, 2));
+                    }),
                 
                 Forms\Components\DatePicker::make('payment_date')
                     ->label('Fecha de Pago')
@@ -112,29 +119,30 @@ class PaymentsRelationManager extends RelationManager
                     ->after(function ($record) {
                         $invoice = $this->getOwnerRecord();
                         
-                        // Si la factura está completamente pagada
-                        if ($invoice->isPaid()) {
-                            $invoice->markAsPaid();
-                            
-                            \Filament\Notifications\Notification::make()
-                                ->success()
-                                ->title('¡Factura pagada!')
-                                ->body('La factura y los períodos vinculados se han marcado como pagados.')
-                                ->send();
-                        }
+                        // Recalcular estado de la factura
+                        $invoice->calculateTotals();
                         
                         $this->dispatch('$refresh');
                     }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->after(fn () => $this->dispatch('$refresh')),
+                    ->after(function () {
+                        $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
+                    }),
                 Tables\Actions\DeleteAction::make()
-                    ->after(fn () => $this->dispatch('$refresh')),
+                    ->after(function () {
+                        $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
-                    ->after(fn () => $this->dispatch('$refresh')),
+                    ->after(function () {
+                        $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
+                    }),
             ]);
     }
 }

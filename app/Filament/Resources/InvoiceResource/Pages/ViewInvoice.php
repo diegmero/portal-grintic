@@ -63,7 +63,18 @@ class ViewInvoice extends ViewRecord
                             ->money('USD')
                             ->size(Components\TextEntry\TextEntrySize::Large)
                             ->weight('bold')
+                            ->weight('bold')
                             ->color('success'),
+                        Components\TextEntry::make('payments_sum_amount')
+                            ->label('Pagado')
+                            ->money('USD')
+                            ->state(fn ($record) => $record->payments()->sum('amount')),
+                        Components\TextEntry::make('balance_due')
+                            ->label('Pendiente')
+                            ->money('USD')
+                            ->state(fn ($record) => $record->total - $record->payments()->sum('amount'))
+                            ->color(fn ($state) => $state > 0 ? 'danger' : 'gray')
+                            ->weight(fn ($state) => $state > 0 ? 'bold' : 'normal'),
                     ])
                     ->columns(1),
                 

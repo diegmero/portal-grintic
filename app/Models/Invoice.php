@@ -39,8 +39,29 @@ class Invoice extends Model
     protected static function booted(): void
     {
         static::deleting(function (Invoice $invoice) {
-            if ($invoice->hasLinkedPeriods()) {
-                throw new \Exception('No se puede eliminar: la factura tiene períodos de suscripción vinculados.');
+            // Revertir estados de períodos vinculados
+            foreach ($invoice->invoiceItems as $item) {
+                if ($item->itemable_type === \App\Models\SubscriptionPeriod::class && $item->itemable_id) {
+                     $period = \App\Models\SubscriptionPeriod::find($item->itemable_id);
+                     if ($period) {
+                         $period->invoice_id = null;
+                         $period->status = \App\Enums\SubscriptionPeriodStatus::PENDING;
+                         $period->save();
+                     }
+                } elseif ($item->itemable_type === \App\Models\WorkLog::class && $item->itemable_id) {
+                     $workLog = \App\Models\WorkLog::find($item->itemable_id);
+                     if ($workLog) {
+                         $workLog->status = \App\Enums\WorkLogStatus::PENDING;
+                         $workLog->save();
+                     }
+                }
+            }
+        });
+
+        static::updated(function (Invoice $invoice) {
+            // Sincronizar estado si la factura fue modificada
+            if ($invoice->wasChanged('status')) {
+                $invoice->syncRelatedPeriodStatuses();
             }
         });
     }
@@ -73,12 +94,35 @@ class Invoice extends Model
     }
 
     // Calcular totales
+    // Calcular totales
     public function calculateTotals()
     {
         $this->subtotal = $this->invoiceItems->sum('subtotal');
         $this->tax_amount = $this->subtotal * ($this->tax_percentage / 100);
         $this->total = $this->subtotal + $this->tax_amount;
+        
+        // Verificar estados automáticos basado en pagos
+        $paid = $this->payments()->sum('amount');
+        
+        // Si no está cancelada/borrador y hay pagos parciales
+        // Si no está cancelada/borrador y hay pagos parciales
+        if (!in_array($this->status, [\App\Enums\InvoiceStatus::DRAFT, \App\Enums\InvoiceStatus::CANCELLED])) {
+            $diff = round($this->total - $paid, 2);
+            
+            if ($diff <= 0 && $this->total > 0) {
+                $this->status = \App\Enums\InvoiceStatus::PAID;
+            } elseif ($paid > 0 && $diff > 0) {
+                $this->status = \App\Enums\InvoiceStatus::PARTIALLY_PAID;
+            } elseif ($paid == 0 && $this->status === \App\Enums\InvoiceStatus::PAID) {
+                // Si estaba pagada pero borraron pagos y quedó en 0
+                $this->status = \App\Enums\InvoiceStatus::SENT;
+            }
+        }
+        
         $this->save();
+        
+        // Sincronizar siempre
+        $this->syncRelatedPeriodStatuses();
     }
 
     // Verificar si está completamente pagada
@@ -90,19 +134,46 @@ class Invoice extends Model
     /**
      * Sincronizar el estado de los períodos relacionados
      */
+    /**
+     * Sincronizar el estado de los items relacionados (Periodos y WorkLogs)
+     */
     public function syncRelatedPeriodStatuses(): void
     {
-        $newStatus = $this->isPaid() 
-            ? \App\Enums\SubscriptionPeriodStatus::PAID 
-            : \App\Enums\SubscriptionPeriodStatus::INVOICED;
+        $this->syncRelatedItemStatuses();
+    }
 
-        // Buscar items que tengan períodos vinculados
+    public function syncRelatedItemStatuses(): void
+    {
+        // Determinar status base
+        $periodStatus = match($this->status) {
+            \App\Enums\InvoiceStatus::PAID => \App\Enums\SubscriptionPeriodStatus::PAID,
+            \App\Enums\InvoiceStatus::PARTIALLY_PAID => \App\Enums\SubscriptionPeriodStatus::PARTIALLY_PAID,
+            \App\Enums\InvoiceStatus::CANCELLED => \App\Enums\SubscriptionPeriodStatus::CANCELLED,
+            default => \App\Enums\SubscriptionPeriodStatus::INVOICED,
+        };
+
+        $workLogStatus = match($this->status) {
+            \App\Enums\InvoiceStatus::PAID => \App\Enums\WorkLogStatus::PAID,
+            \App\Enums\InvoiceStatus::PARTIALLY_PAID => \App\Enums\WorkLogStatus::PARTIALLY_PAID,
+            // WorkLogs no tienen CANCELLED, volvemos a INVOICED o PENDING?
+            // Si la factura se cancela, el trabajo sigue hecho, quizás volver a PENDING para poder facturar de nuevo?
+            \App\Enums\InvoiceStatus::CANCELLED => \App\Enums\WorkLogStatus::PENDING, 
+            default => \App\Enums\WorkLogStatus::INVOICED,
+        };
+
+        // Recorrer items
         foreach ($this->invoiceItems as $item) {
             if ($item->itemable_type === \App\Models\SubscriptionPeriod::class && $item->itemable_id) {
                 $period = \App\Models\SubscriptionPeriod::find($item->itemable_id);
-                if ($period && $period->status !== \App\Enums\SubscriptionPeriodStatus::CANCELLED) {
-                    $period->status = $newStatus;
+                if ($period) {
+                    $period->status = $periodStatus;
                     $period->save();
+                }
+            } elseif ($item->itemable_type === \App\Models\WorkLog::class && $item->itemable_id) {
+                $workLog = \App\Models\WorkLog::find($item->itemable_id);
+                if ($workLog) {
+                    $workLog->status = $workLogStatus;
+                    $workLog->save();
                 }
             }
         }
