@@ -17,7 +17,8 @@ class PaymentsRelationManager extends RelationManager
 
     public function isReadOnly(): bool
     {
-        return false;
+        // Read-only si la factura está pagada
+        return $this->getOwnerRecord()->status === \App\Enums\InvoiceStatus::PAID;
     }
 
     public function form(Form $form): Form
@@ -109,6 +110,7 @@ class PaymentsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Nuevo Pago')
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->afterFormFilled(function () {
                         // Pre-llenar con el monto pendiente
                         $invoice = $this->getOwnerRecord();
@@ -127,11 +129,13 @@ class PaymentsRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');
                     }),
                 Tables\Actions\DeleteAction::make()
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');
@@ -139,6 +143,7 @@ class PaymentsRelationManager extends RelationManager
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');

@@ -1,18 +1,35 @@
 <x-filament-panels::page>
-    <div style="display: flex; flex-direction: row; gap: 1.5rem;">
-        {{-- Columna izquierda: Períodos de facturación --}}
-        <div style="flex: 1; min-width: 0;">
-            <x-filament-panels::resources.relation-managers
-                :active-manager="$this->activeRelationManager"
-                :managers="$this->getRelationManagers()"
-                :owner-record="$this->record"
-                :page-class="static::class"
-            />
-        </div>
+    <style>
+        /* Force equal height cards in the info grid */
+        .fi-in-grid {
+            display: flex !important;
+            align-items: stretch !important;
+        }
+        .fi-in-grid > div {
+            display: flex;
+            flex: 1;
+        }
+        .fi-in-grid > div > .fi-in-section {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .fi-in-grid > div > .fi-in-section > .fi-in-section-content-ctn {
+            flex-grow: 1;
+        }
+    </style>
 
-        {{-- Columna derecha: Información de la suscripción --}}
-        <div style="width: 350px; min-width: 350px; flex-shrink: 0;">
-            {{ $this->infolist }}
-        </div>
+    {{-- Información de la suscripción --}}
+    <div class="mb-6">
+        {{ $this->infolist }}
     </div>
+
+    {{-- Períodos de facturación --}}
+    <x-filament-panels::resources.relation-managers
+        :active-manager="$this->activeRelationManager"
+        :managers="$this->getRelationManagers()"
+        :owner-record="$this->record"
+        :page-class="static::class"
+    />
 </x-filament-panels::page>

@@ -48,13 +48,18 @@ class Subscription extends Model
                 }
             }
 
-            // Regla 2: Historia Financiera
-            if ($subscription->periods()->whereNotNull('invoice_id')->exists()) {
+            // Regla 2: Historia Financiera (incluye períodos soft-deleted)
+            $hasFinancialHistory = $subscription->periods()
+                ->withTrashed()
+                ->whereNotNull('invoice_id')
+                ->exists();
+            
+            if ($hasFinancialHistory) {
                  if (! $subscription->isForceDeleting()) {
                      \Filament\Notifications\Notification::make()
                         ->danger()
                         ->title('Operación Bloqueada')
-                        ->body('No se puede eliminar una suscripción con historial de facturación.')
+                        ->body('No se puede eliminar una suscripción con historial de facturación. Los registros financieros deben preservarse.')
                         ->send();
                      return false;
                 }

@@ -16,7 +16,8 @@ class InvoiceItemsRelationManager extends RelationManager
 
     public function isReadOnly(): bool
     {
-        return false;
+        // Read-only si la factura está pagada
+        return $this->getOwnerRecord()->status === \App\Enums\InvoiceStatus::PAID;
     }
 
     public function form(Form $form): Form
@@ -87,6 +88,7 @@ class InvoiceItemsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Nuevo Item')
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');
@@ -94,11 +96,13 @@ class InvoiceItemsRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');
                     }),
                 Tables\Actions\DeleteAction::make()
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');
@@ -106,6 +110,7 @@ class InvoiceItemsRelationManager extends RelationManager
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
+                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');

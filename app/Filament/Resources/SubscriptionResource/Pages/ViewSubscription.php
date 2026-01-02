@@ -25,63 +25,64 @@ class ViewSubscription extends ViewRecord
     {
         return $infolist
             ->schema([
-                Components\Section::make('Información de la Suscripción')
-                    ->icon('heroicon-o-credit-card')
+                Components\Grid::make(3)
                     ->schema([
-                        Components\TextEntry::make('service.name')
-                            ->label('Servicio')
-                            ->size(Components\TextEntry\TextEntrySize::Large)
-                            ->weight('bold'),
-                        Components\TextEntry::make('client.company_name')
-                            ->label('Cliente')
-                            ->icon('heroicon-o-building-office'),
-                        Components\TextEntry::make('status')
-                            ->label('Estado')
-                            ->badge(),
-                        Components\TextEntry::make('billing_cycle')
-                            ->label('Ciclo de Facturación')
-                            ->placeholder('No definido'),
-                    ])
-                    ->columns(1),
-                
-                Components\Section::make('Precio')
-                    ->icon('heroicon-o-currency-dollar')
-                    ->schema([
-                        Components\TextEntry::make('effective_price')
-                            ->label('Precio Actual')
-                            ->money('USD')
-                            ->size(Components\TextEntry\TextEntrySize::Large)
-                            ->weight('bold')
-                            ->color('success'),
-                        Components\TextEntry::make('service.base_price')
-                            ->label('Precio Base del Servicio')
-                            ->money('USD')
-                            ->color('gray'),
-                        Components\TextEntry::make('custom_price')
-                            ->label('Precio Personalizado')
-                            ->money('USD')
-                            ->placeholder('Usa precio base'),
-                    ])
-                    ->columns(1),
-                
-                Components\Section::make('Fechas')
-                    ->icon('heroicon-o-calendar')
-                    ->schema([
-                        Components\TextEntry::make('started_at')
-                            ->label('Inicio')
-                            ->date('d/m/Y')
-                            ->placeholder('No definida'),
-                        Components\TextEntry::make('next_billing_date')
-                            ->label('Próxima Facturación')
-                            ->date('d/m/Y')
-                            ->placeholder('No definida'),
-                        Components\TextEntry::make('cancelled_at')
-                            ->label('Cancelada')
-                            ->date('d/m/Y')
-                            ->placeholder('Activa')
-                            ->color('danger'),
-                    ])
-                    ->columns(1),
+                        Components\Section::make('Información de la Suscripción')
+                            ->icon('heroicon-o-credit-card')
+                            ->schema([
+                                Components\TextEntry::make('service.name')
+                                    ->label('Servicio'),
+                                Components\TextEntry::make('client.company_name')
+                                    ->label('Cliente'),
+                                Components\TextEntry::make('status')
+                                    ->label('Estado')
+                                    ->badge(),
+                            ])
+                            ->columnSpan(1),
+                        
+                        Components\Section::make('Precio y Ciclo')
+                            ->icon('heroicon-o-currency-dollar')
+                            ->schema([
+                                Components\TextEntry::make('effective_price')
+                                    ->label('Precio Actual')
+                                    ->money('USD')
+                                    ->color('success'),
+                                Components\TextEntry::make('billing_cycle')
+                                    ->label('Ciclo de Facturación')
+                                    ->placeholder('No definido'),
+                                Components\TextEntry::make('custom_price')
+                                    ->label('Precio Personalizado')
+                                    ->money('USD')
+                                    ->placeholder('Usa precio base'),
+                            ])
+                            ->columnSpan(1),
+                        
+                        Components\Section::make('Fechas')
+                            ->icon('heroicon-o-calendar')
+                            ->schema([
+                                Components\TextEntry::make('started_at')
+                                    ->label('Inicio')
+                                    ->date('d/m/Y')
+                                    ->placeholder('No definida'),
+                                Components\TextEntry::make('last_payment_date')
+                                    ->label('Último Pago')
+                                    ->state(function ($record) {
+                                        $lastPayment = $record->periods()
+                                            ->whereHas('invoice.payments')
+                                            ->with(['invoice.payments' => fn($q) => $q->latest('payment_date')])
+                                            ->get()
+                                            ->flatMap(fn($period) => $period->invoice?->payments ?? collect())
+                                            ->sortByDesc('payment_date')
+                                            ->first();
+                                        
+                                        return $lastPayment?->payment_date?->format('d/m/Y') ?? 'Sin pagos';
+                                    }),
+                                Components\TextEntry::make('periods_count')
+                                    ->label('Períodos Generados')
+                                    ->state(fn ($record) => $record->periods()->count()),
+                            ])
+                            ->columnSpan(1),
+                    ]),
             ]);
     }
 
