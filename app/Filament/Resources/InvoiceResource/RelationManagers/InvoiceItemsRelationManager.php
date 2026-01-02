@@ -14,6 +14,11 @@ class InvoiceItemsRelationManager extends RelationManager
     
     protected static ?string $title = 'Items de Factura';
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Form $form): Form
     {
         return $form

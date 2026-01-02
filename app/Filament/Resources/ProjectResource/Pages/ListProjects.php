@@ -16,4 +16,12 @@ class ListProjects extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            ProjectResource\Widgets\OverdueProjectsWidget::class,
+            ProjectResource\Widgets\OverdueTasksWidget::class,
+        ];
+    }
 }

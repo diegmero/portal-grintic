@@ -18,6 +18,11 @@ class PeriodsRelationManager extends RelationManager
 
     protected static ?string $modelLabel = 'Período';
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Form $form): Form
     {
         return $form

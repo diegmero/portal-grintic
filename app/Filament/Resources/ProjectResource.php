@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ProjectStatus;
 use App\Filament\Resources\ProjectResource\Pages;
+use App\Filament\Resources\ProjectResource\Widgets;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -68,6 +69,9 @@ class ProjectResource extends Resource
                         Forms\Components\DatePicker::make('started_at')
                             ->label('Fecha de Inicio'),
                         
+                        Forms\Components\DatePicker::make('deadline')
+                            ->label('Fecha Límite'),
+                        
                         Forms\Components\DatePicker::make('completed_at')
                             ->label('Fecha de Finalización')
                             ->visible(fn (Forms\Get $get) => $get('status') === 'done'),
@@ -100,11 +104,28 @@ class ProjectResource extends Resource
                     ->badge()
                     ->sortable(),
                 
+                Tables\Columns\TextColumn::make('progress')
+                    ->label('Progreso')
+                    ->state(fn ($record) => $record->progress . '%')
+                    ->badge()
+                    ->color(fn ($record) => match(true) {
+                        $record->progress >= 100 => 'success',
+                        $record->progress >= 50 => 'warning',
+                        default => 'gray',
+                    }),
+                
+                Tables\Columns\TextColumn::make('deadline')
+                    ->label('Fecha Límite')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->color(fn ($record) => $record?->is_overdue ? 'danger' : null)
+                    ->icon(fn ($record) => $record?->is_overdue ? 'heroicon-o-exclamation-triangle' : null),
+                
                 Tables\Columns\TextColumn::make('started_at')
                     ->label('Inicio')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\TextColumn::make('completed_at')
                     ->label('Fin')
@@ -128,6 +149,8 @@ class ProjectResource extends Resource
                     ->toggle(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('bill')
                     ->label('Facturar Proyecto')
@@ -194,7 +217,16 @@ class ProjectResource extends Resource
         return [
             'index' => Pages\ListProjects::route('/'),
             'create' => Pages\CreateProject::route('/create'),
+            'view' => Pages\ViewProject::route('/{record}'),
             'edit' => Pages\EditProject::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            Widgets\OverdueProjectsWidget::class,
+            Widgets\OverdueTasksWidget::class,
         ];
     }
 }
