@@ -79,42 +79,18 @@ class SubscriptionResource extends Resource
                             ->default(SubscriptionStatus::ACTIVE)
                             ->required()
                             ->live(),
-                    ])
-                    ->columns(2),
-                
-                Forms\Components\Section::make('Fechas')
-                    ->schema([
+                        
                         Forms\Components\DatePicker::make('started_at')
                             ->label('Fecha de Inicio')
                             ->default(now())
                             ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                if ($state && $get('billing_cycle')) {
-                                    $date = \Carbon\Carbon::parse($state);
-                                    $cycle = $get('billing_cycle');
-                                    
-                                    $nextBilling = match($cycle) {
-                                        'monthly' => $date->addMonth(),
-                                        'quarterly' => $date->addMonths(3),
-                                        'yearly' => $date->addYear(),
-                                        default => $date->addMonth(),
-                                    };
-                                    
-                                    $set('next_billing_date', $nextBilling->format('Y-m-d'));
-                                }
-                            }),
-                        
-                        Forms\Components\DatePicker::make('next_billing_date')
-                            ->label('Próxima Facturación')
-                            ->required()
-                            ->minDate(now()),
+                            ->hint('Fecha en que inicia la suscripción'),
                         
                         Forms\Components\DatePicker::make('cancelled_at')
                             ->label('Fecha de Cancelación')
                             ->visible(fn (Forms\Get $get) => $get('status') === 'cancelled'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
             ]);
     }
 
@@ -144,11 +120,24 @@ class SubscriptionResource extends Resource
                     ->badge()
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('next_billing_date')
-                    ->label('Próxima Facturación')
-                    ->date('d/m/Y')
+                Tables\Columns\TextColumn::make('periods_count')
+                    ->label('Períodos')
+                    ->counts('periods')
+                    ->suffix(' total')
                     ->sortable()
-                    ->color(fn ($record) => $record->next_billing_date <= now()->addDays(7) ? 'warning' : null),
+                    ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('pending_periods_count')
+                    ->label('Pendientes/Impagos')
+                    ->getStateUsing(function ($record) {
+                        return $record->periods()
+                            ->whereIn('status', ['pending', 'invoiced'])
+                            ->count();
+                    })
+                    ->badge()
+                    ->color(fn ($state) => $state > 0 ? 'warning' : 'success')
+                    ->formatStateUsing(fn ($state) => $state > 0 ? "$state pendiente" . ($state > 1 ? 's' : '') : 'Al día')
+                    ->sortable(false),
                 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
@@ -158,7 +147,7 @@ class SubscriptionResource extends Resource
                 Tables\Columns\TextColumn::make('started_at')
                     ->label('Inicio')
                     ->date('d/m/Y')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('client')
@@ -187,80 +176,6 @@ class SubscriptionResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('bill')
-                    ->label('Facturar')
-                    ->icon('heroicon-o-document-text')
-                    ->color('success')
-                    ->visible(fn ($record) => $record->status === SubscriptionStatus::ACTIVE)
-                    ->action(function ($record) {
-                        return \DB::transaction(function () use ($record) {
-                            // Crear factura (invoice_number se genera automáticamente)
-                            $invoice = \App\Models\Invoice::create([
-                                'client_id' => $record->client_id,
-                                'issue_date' => now(),
-                                'due_date' => now()->addDays(30),
-                                'subtotal' => 0,
-                                'tax_percentage' => 0,
-                                'tax_amount' => 0,
-                                'total' => 0,
-                                'status' => 'draft',
-                            ]);
-                            
-                            // Agregar item
-                            $description = $record->service->name . " - " . $record->billing_cycle->label();
-                            $invoice->invoiceItems()->create([
-                                'description' => $description,
-                                'quantity' => 1,
-                                'unit_price' => $record->effective_price,
-                                'subtotal' => $record->effective_price,
-                                'itemable_type' => \App\Models\Subscription::class,
-                                'itemable_id' => $record->id,
-                            ]);
-                            
-                            // Actualizar próxima fecha de facturación
-                            $days = match($record->billing_cycle) {
-                                BillingCycle::MONTHLY => 30,
-                                BillingCycle::QUARTERLY => 90,
-                                BillingCycle::YEARLY => 365,
-                            };
-                            $record->next_billing_date = now()->addDays($days);
-                            $record->save();
-                            
-                            // Calcular totales
-                            $invoice->calculateTotals();
-                            
-                            \Filament\Notifications\Notification::make()
-                                ->success()
-                                ->title('Factura generada')
-                                ->body("Factura {$invoice->invoice_number} creada. Próxima facturación: {$record->next_billing_date->format('d/m/Y')}")
-                                ->send();
-                            
-                            return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
-                        });
-                    })
-                    ->requiresConfirmation(),
-                Tables\Actions\Action::make('renew')
-                    ->label('Renovar')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->visible(fn ($record) => $record->status === SubscriptionStatus::ACTIVE)
-                    ->action(function ($record) {
-                        $days = match($record->billing_cycle) {
-                            BillingCycle::MONTHLY => 30,
-                            BillingCycle::QUARTERLY => 90,
-                            BillingCycle::YEARLY => 365,
-                        };
-                        
-                        $record->next_billing_date = now()->addDays($days);
-                        $record->save();
-                        
-                        \Filament\Notifications\Notification::make()
-                            ->success()
-                            ->title('Suscripción renovada')
-                            ->body("Próxima facturación: {$record->next_billing_date->format('d/m/Y')}")
-                            ->send();
-                    })
-                    ->requiresConfirmation(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -289,24 +204,23 @@ class SubscriptionResource extends Resource
                         Infolists\Components\TextEntry::make('status')
                             ->label('Estado')
                             ->badge(),
-                    ])
-                    ->columns(2),
-                
-                Infolists\Components\Section::make('Fechas')
-                    ->schema([
                         Infolists\Components\TextEntry::make('started_at')
                             ->label('Fecha de Inicio')
-                            ->date('d/m/Y'),
-                        Infolists\Components\TextEntry::make('next_billing_date')
-                            ->label('Próxima Facturación')
                             ->date('d/m/Y'),
                         Infolists\Components\TextEntry::make('cancelled_at')
                             ->label('Fecha de Cancelación')
                             ->date('d/m/Y')
                             ->visible(fn ($record) => $record->cancelled_at),
                     ])
-                    ->columns(3),
+                    ->columns(2),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            \App\Filament\Resources\SubscriptionResource\RelationManagers\PeriodsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

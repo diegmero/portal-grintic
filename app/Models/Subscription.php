@@ -50,6 +50,11 @@ class Subscription extends Model
         return $this->morphMany(InvoiceItem::class, 'itemable');
     }
 
+    public function periods(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SubscriptionPeriod::class);
+    }
+
     // Accessor para obtener el precio efectivo
     public function getEffectivePriceAttribute()
     {
