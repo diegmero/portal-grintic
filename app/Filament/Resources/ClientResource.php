@@ -32,6 +32,11 @@ class ClientResource extends Resource
 
     public static function form(Form $form): Form
     {
+        // Obtener países desde config
+        $countries = collect(config('countries', []))->mapWithKeys(fn ($data, $code) => [
+            $code => $data['name']
+        ])->toArray();
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Información del Cliente')
@@ -42,10 +47,34 @@ class ClientResource extends Resource
                             ->maxLength(255)
                             ->columnSpan('full'),
                         
+                        Forms\Components\Select::make('country_code')
+                            ->label('País')
+                            ->options($countries)
+                            ->searchable()
+                            ->live()
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('tax_id_type', null)),
+                        
+                        Forms\Components\Select::make('tax_id_type')
+                            ->label('Tipo de Identificación')
+                            ->options(function (Forms\Get $get) {
+                                $countryCode = $get('country_code');
+                                if (!$countryCode) {
+                                    return [];
+                                }
+                                return config("countries.{$countryCode}.tax_ids", []);
+                            })
+                            ->searchable()
+                            ->visible(fn (Forms\Get $get) => filled($get('country_code'))),
+                        
                         Forms\Components\TextInput::make('tax_id')
-                            ->label('NIT/RUT/VAT')
+                            ->label('Número de Identificación')
                             ->maxLength(50)
-                            ->unique(ignoreRecord: true),
+                            ->unique(ignoreRecord: true)
+                            ->helperText(fn (Forms\Get $get) => 
+                                $get('tax_id_type') 
+                                    ? 'Ingrese el número de ' . $get('tax_id_type')
+                                    : 'Seleccione un país y tipo de identificación primero'
+                            ),
                         
                         Forms\Components\Select::make('status')
                             ->label('Estado')
@@ -71,9 +100,15 @@ class ClientResource extends Resource
                     ->searchable()
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('tax_id')
-                    ->label('NIT/RUT')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('country_name')
+                    ->label('País')
+                    ->placeholder('No definido'),
+                
+                Tables\Columns\TextColumn::make('formatted_tax_id')
+                    ->label('ID Fiscal')
+                    ->searchable(query: function ($query, string $search) {
+                        return $query->where('tax_id', 'like', "%{$search}%");
+                    }),
                 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')

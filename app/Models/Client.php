@@ -14,6 +14,8 @@ class Client extends Model
 
     protected $fillable = [
         'company_name',
+        'country_code',
+        'tax_id_type',
         'tax_id',
         'internal_notes',
         'status',
@@ -22,6 +24,41 @@ class Client extends Model
     protected $casts = [
         'status' => ClientStatus::class,
     ];
+
+    /**
+     * Obtener el nombre del país
+     */
+    public function getCountryNameAttribute(): ?string
+    {
+        if (!$this->country_code) {
+            return null;
+        }
+        return config("countries.{$this->country_code}.name");
+    }
+
+    /**
+     * Obtener el nombre del tipo de ID fiscal
+     */
+    public function getTaxIdLabelAttribute(): ?string
+    {
+        if (!$this->country_code || !$this->tax_id_type) {
+            return null;
+        }
+        return config("countries.{$this->country_code}.tax_ids.{$this->tax_id_type}");
+    }
+
+    /**
+     * Obtener el ID fiscal formateado (tipo + número)
+     */
+    public function getFormattedTaxIdAttribute(): ?string
+    {
+        if (!$this->tax_id) {
+            return null;
+        }
+        $prefix = $this->tax_id_type ?: '';
+        return $prefix ? "{$prefix}: {$this->tax_id}" : $this->tax_id;
+    }
+
 
     // Relaciones
     public function contacts(): HasMany

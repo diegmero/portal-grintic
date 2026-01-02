@@ -12,6 +12,8 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewProject extends ViewRecord
 {
     protected static string $resource = ProjectResource::class;
+    
+    protected static string $view = 'filament.resources.project-resource.pages.view-project';
 
     protected function getHeaderActions(): array
     {
@@ -71,9 +73,29 @@ class ViewProject extends ViewRecord
     {
         return $infolist
             ->schema([
-                Components\Section::make('Resumen del Proyecto')
+                Components\Section::make('Información del Proyecto')
+                    ->icon('heroicon-o-folder')
                     ->schema([
-                        Components\Grid::make(4)
+                        Components\TextEntry::make('name')
+                            ->label('Nombre')
+                            ->size(Components\TextEntry\TextEntrySize::Large)
+                            ->weight('bold'),
+                        Components\TextEntry::make('client.company_name')
+                            ->label('Cliente')
+                            ->icon('heroicon-o-building-office'),
+                        Components\TextEntry::make('status')
+                            ->label('Estado')
+                            ->badge(),
+                        Components\TextEntry::make('description')
+                            ->label('Descripción')
+                            ->placeholder('Sin descripción'),
+                    ])
+                    ->columns(1),
+                
+                Components\Section::make('Estadísticas')
+                    ->icon('heroicon-o-chart-bar')
+                    ->schema([
+                        Components\Grid::make(2)
                             ->schema([
                                 Components\TextEntry::make('progress')
                                     ->label('Progreso')
@@ -85,62 +107,45 @@ class ViewProject extends ViewRecord
                                         $record->progress >= 50 => 'warning',
                                         default => 'gray',
                                     }),
-                                
                                 Components\TextEntry::make('total_budget')
                                     ->label('Presupuesto')
                                     ->money('USD')
                                     ->size(Components\TextEntry\TextEntrySize::Large)
-                                    ->weight('bold'),
-                                
-                                Components\TextEntry::make('status')
-                                    ->label('Estado')
-                                    ->badge(),
-                                
-                                Components\TextEntry::make('days_until_deadline')
-                                    ->label('Días Restantes')
-                                    ->state(function ($record) {
-                                        if (!$record->deadline) return 'Sin fecha límite';
-                                        $days = $record->days_until_deadline;
-                                        if ($days < 0) return abs($days) . ' días vencido';
-                                        if ($days === 0) return 'Vence hoy';
-                                        return $days . ' días';
-                                    })
-                                    ->color(fn ($record) => match(true) {
-                                        !$record->deadline => 'gray',
-                                        $record->is_overdue => 'danger',
-                                        $record->days_until_deadline <= 7 => 'warning',
-                                        default => 'success',
-                                    })
-                                    ->size(Components\TextEntry\TextEntrySize::Large)
-                                    ->weight('bold'),
+                                    ->weight('bold')
+                                    ->color('success'),
                             ]),
                     ]),
                 
-                Components\Section::make('Información')
+                Components\Section::make('Fechas')
+                    ->icon('heroicon-o-calendar')
                     ->schema([
-                        Components\Grid::make(2)
-                            ->schema([
-                                Components\TextEntry::make('client.company_name')
-                                    ->label('Cliente'),
-                                
-                                Components\TextEntry::make('name')
-                                    ->label('Nombre'),
-                                
-                                Components\TextEntry::make('started_at')
-                                    ->label('Fecha Inicio')
-                                    ->date('d/m/Y'),
-                                
-                                Components\TextEntry::make('deadline')
-                                    ->label('Fecha Límite')
-                                    ->date('d/m/Y')
-                                    ->placeholder('No definida'),
-                                
-                                Components\TextEntry::make('description')
-                                    ->label('Descripción')
-                                    ->columnSpan(2),
-                            ]),
+                        Components\TextEntry::make('started_at')
+                            ->label('Inicio')
+                            ->date('d/m/Y')
+                            ->placeholder('No definida'),
+                        Components\TextEntry::make('deadline')
+                            ->label('Fecha Límite')
+                            ->date('d/m/Y')
+                            ->placeholder('No definida')
+                            ->color(fn ($record) => $record?->is_overdue ? 'danger' : null),
+                        Components\TextEntry::make('days_until_deadline')
+                            ->label('Días Restantes')
+                            ->state(function ($record) {
+                                if (!$record->deadline) return 'Sin fecha límite';
+                                $days = $record->days_until_deadline;
+                                if ($days < 0) return abs($days) . ' días vencido';
+                                if ($days === 0) return 'Vence hoy';
+                                return $days . ' días';
+                            })
+                            ->color(fn ($record) => match(true) {
+                                !$record->deadline => 'gray',
+                                $record->is_overdue => 'danger',
+                                $record->days_until_deadline <= 7 => 'warning',
+                                default => 'success',
+                            })
+                            ->weight('bold'),
                     ])
-                    ->collapsible(),
+                    ->columns(1),
             ]);
     }
 
@@ -150,6 +155,7 @@ class ViewProject extends ViewRecord
             \App\Filament\Resources\ProjectResource\RelationManagers\TasksRelationManager::class,
             \App\Filament\Resources\ProjectResource\RelationManagers\NotesRelationManager::class,
             \App\Filament\Resources\ProjectResource\RelationManagers\LinksRelationManager::class,
+            \App\Filament\Resources\ProjectResource\RelationManagers\InvoicesRelationManager::class,
         ];
     }
 }

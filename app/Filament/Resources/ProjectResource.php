@@ -64,7 +64,8 @@ class ProjectResource extends Resource
                             ->label('Estado')
                             ->options(ProjectStatus::class)
                             ->default(ProjectStatus::PLANNING)
-                            ->required(),
+                            ->required()
+                            ->live(),
                         
                         Forms\Components\DatePicker::make('started_at')
                             ->label('Fecha de Inicio'),
@@ -74,7 +75,7 @@ class ProjectResource extends Resource
                         
                         Forms\Components\DatePicker::make('completed_at')
                             ->label('Fecha de Finalización')
-                            ->visible(fn (Forms\Get $get) => $get('status') === 'done'),
+                            ->visible(fn (Forms\Get $get) => $get('status') === ProjectStatus::DONE->value || $get('status') === ProjectStatus::DONE),
                     ])
                     ->columns(2),
             ]);

@@ -60,6 +60,21 @@ class Project extends Model
         return $this->hasMany(ProjectLink::class);
     }
 
+    /**
+     * Get invoices through invoice items (polymorphic)
+     */
+    public function invoices()
+    {
+        return $this->hasManyThrough(
+            \App\Models\Invoice::class,
+            \App\Models\InvoiceItem::class,
+            'itemable_id', // Foreign key on invoice_items
+            'id', // Foreign key on invoices
+            'id', // Local key on projects
+            'invoice_id' // Local key on invoice_items
+        )->where('invoice_items.itemable_type', \App\Models\Project::class);
+    }
+
     // Accessors
     public function getProgressAttribute(): int
     {
