@@ -58,7 +58,7 @@ class Subscription extends Model
     // Accessor para obtener el precio efectivo
     public function getEffectivePriceAttribute()
     {
-        return $this->custom_price ?? $this->service->base_price;
+        return $this->custom_price ?? ($this->service?->base_price ?? 0);
     }
 
     // Scopes

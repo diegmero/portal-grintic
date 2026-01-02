@@ -29,11 +29,6 @@ class Client extends Model
         return $this->hasMany(Contact::class);
     }
 
-    public function assets(): HasMany
-    {
-        return $this->hasMany(Asset::class);
-    }
-
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);

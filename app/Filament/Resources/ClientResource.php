@@ -132,9 +132,6 @@ class ClientResource extends Resource
                         Infolists\Components\TextEntry::make('contacts_count')
                             ->label('Contactos')
                             ->state(fn ($record) => $record->contacts()->count()),
-                        Infolists\Components\TextEntry::make('assets_count')
-                            ->label('Activos')
-                            ->state(fn ($record) => $record->assets()->count()),
                         Infolists\Components\TextEntry::make('subscriptions_count')
                             ->label('Suscripciones')
                             ->state(fn ($record) => $record->subscriptions()->count()),
@@ -142,7 +139,7 @@ class ClientResource extends Resource
                             ->label('Proyectos')
                             ->state(fn ($record) => $record->projects()->count()),
                     ])
-                    ->columns(4),
+                    ->columns(3),
             ]);
     }
 
@@ -150,7 +147,6 @@ class ClientResource extends Resource
     {
         return [
             RelationManagers\ContactsRelationManager::class,
-            RelationManagers\AssetsRelationManager::class,
             RelationManagers\SubscriptionsRelationManager::class,
             RelationManagers\ProjectsRelationManager::class,
         ];
