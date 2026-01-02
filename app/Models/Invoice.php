@@ -36,6 +36,26 @@ class Invoice extends Model
         'due_date' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Invoice $invoice) {
+            if ($invoice->hasLinkedPeriods()) {
+                throw new \Exception('No se puede eliminar: la factura tiene períodos de suscripción vinculados.');
+            }
+        });
+    }
+
+    /**
+     * Verificar si tiene períodos de suscripción vinculados
+     */
+    public function hasLinkedPeriods(): bool
+    {
+        return $this->invoiceItems()
+            ->where('itemable_type', \App\Models\SubscriptionPeriod::class)
+            ->whereNotNull('itemable_id')
+            ->exists();
+    }
+
     // Relaciones
     public function client(): BelongsTo
     {
@@ -65,6 +85,37 @@ class Invoice extends Model
     public function isPaid(): bool
     {
         return $this->payments()->sum('amount') >= $this->total;
+    }
+
+    /**
+     * Sincronizar el estado de los períodos relacionados
+     */
+    public function syncRelatedPeriodStatuses(): void
+    {
+        $newStatus = $this->isPaid() 
+            ? \App\Enums\SubscriptionPeriodStatus::PAID 
+            : \App\Enums\SubscriptionPeriodStatus::INVOICED;
+
+        // Buscar items que tengan períodos vinculados
+        foreach ($this->invoiceItems as $item) {
+            if ($item->itemable_type === \App\Models\SubscriptionPeriod::class && $item->itemable_id) {
+                $period = \App\Models\SubscriptionPeriod::find($item->itemable_id);
+                if ($period && $period->status !== \App\Enums\SubscriptionPeriodStatus::CANCELLED) {
+                    $period->status = $newStatus;
+                    $period->save();
+                }
+            }
+        }
+    }
+
+    /**
+     * Marcar factura como pagada y sincronizar períodos
+     */
+    public function markAsPaid(): void
+    {
+        $this->status = \App\Enums\InvoiceStatus::PAID;
+        $this->save();
+        $this->syncRelatedPeriodStatuses();
     }
 
     // Scopes

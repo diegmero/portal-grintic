@@ -36,7 +36,7 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->default(1)
                     ->minValue(0.01)
                     ->step(0.01)
-                    ->live()
+                    ->live(onBlur: true)
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         $qty = (float) $state;
                         $price = (float) $get('unit_price');
@@ -48,7 +48,7 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->numeric()
                     ->required()
                     ->prefix('$')
-                    ->live()
+                    ->live(onBlur: true)
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         $qty = (float) $get('quantity');
                         $price = (float) $state;
@@ -86,24 +86,29 @@ class InvoiceItemsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
+                    ->label('Nuevo Item')
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
                     }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
                     }),
                 Tables\Actions\DeleteAction::make()
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
                     }),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
                     }),
             ]);
     }

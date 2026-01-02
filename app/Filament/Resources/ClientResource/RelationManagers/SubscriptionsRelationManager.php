@@ -95,7 +95,8 @@ class SubscriptionsRelationManager extends RelationManager
                     ->badge(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->successRedirectUrl(fn ($record) => route('filament.admin.resources.subscriptions.edit', ['record' => $record])),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

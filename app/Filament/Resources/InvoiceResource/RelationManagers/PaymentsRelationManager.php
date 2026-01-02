@@ -100,14 +100,41 @@ class PaymentsRelationManager extends RelationManager
                     ),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('Nuevo Pago')
+                    ->afterFormFilled(function () {
+                        // Pre-llenar con el monto pendiente
+                        $invoice = $this->getOwnerRecord();
+                        $paid = $invoice->payments()->sum('amount');
+                        $remaining = $invoice->total - $paid;
+                        return ['amount' => $remaining > 0 ? $remaining : 0];
+                    })
+                    ->after(function ($record) {
+                        $invoice = $this->getOwnerRecord();
+                        
+                        // Si la factura está completamente pagada
+                        if ($invoice->isPaid()) {
+                            $invoice->markAsPaid();
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('¡Factura pagada!')
+                                ->body('La factura y los períodos vinculados se han marcado como pagados.')
+                                ->send();
+                        }
+                        
+                        $this->dispatch('$refresh');
+                    }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->after(fn () => $this->dispatch('$refresh')),
+                Tables\Actions\DeleteAction::make()
+                    ->after(fn () => $this->dispatch('$refresh')),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()
+                    ->after(fn () => $this->dispatch('$refresh')),
             ]);
     }
 }

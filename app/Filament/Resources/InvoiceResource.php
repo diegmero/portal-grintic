@@ -256,10 +256,12 @@ class InvoiceResource extends Resource
                             'notes' => $data['notes'],
                         ]);
                         
-                        $record->update(['status' => \App\Enums\InvoiceStatus::PAID]);
+                        // Usar markAsPaid para sincronizar estados de períodos
+                        $record->markAsPaid();
                         
                         \Filament\Notifications\Notification::make()
                             ->title('Pago registrado correctamente')
+                            ->body('La factura y períodos vinculados han sido marcados como pagados.')
                             ->success()
                             ->send();
                     }),

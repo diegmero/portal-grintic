@@ -38,12 +38,10 @@ class PeriodsRelationManager extends RelationManager
                             ->required()
                             ->after('period_start'),
                         
-                        Forms\Components\TextInput::make('amount')
-                            ->label('Monto')
-                            ->numeric()
-                            ->prefix('$')
-                            ->required()
-                            ->default(fn ($livewire) => $livewire->ownerRecord->effective_price),
+                        Forms\Components\Placeholder::make('amount_display')
+                            ->label('Monto del Período')
+                            ->content(fn ($livewire) => '$' . number_format($livewire->ownerRecord->effective_price, 2))
+                            ->helperText('Este monto se toma automáticamente del precio de la suscripción'),
                         
                         Forms\Components\Select::make('status')
                             ->label('Estado')
@@ -75,12 +73,12 @@ class PeriodsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('period_start')
             ->defaultSort('period_start', 'desc')
+            ->recordAction('edit')
             ->columns([
                 Tables\Columns\TextColumn::make('period_label')
                     ->label('Período')
-                    ->searchable(false)
-                    ->sortable(false)
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->sortable(['period_start']),
                 
                 Tables\Columns\TextColumn::make('period_start')
                     ->label('Inicio')
@@ -130,12 +128,7 @@ class PeriodsRelationManager extends RelationManager
                     ->weight('bold')
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('work_description')
-                    ->label('Trabajo Realizado')
-                    ->limit(50)
-                    ->tooltip(fn ($record) => $record->work_description)
-                    ->placeholder('Sin descripción')
-                    ->wrap(),
+
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -144,7 +137,11 @@ class PeriodsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Nuevo Período'),
+                    ->label('Nuevo Período')
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['amount'] = $this->ownerRecord->effective_price;
+                        return $data;
+                    }),
             ])
             ->actions([
                 Tables\Actions\Action::make('bill')
@@ -204,34 +201,119 @@ class PeriodsRelationManager extends RelationManager
                                 ->body("Factura {$invoice->invoice_number} creada")
                                 ->send();
                             
-                            return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                            return redirect()->route('filament.admin.resources.invoices.view', ['record' => $invoice]);
                         });
                     })
                     ->requiresConfirmation(),
                 
-                Tables\Actions\EditAction::make(),
-                
-                Tables\Actions\Action::make('cancel')
-                    ->label('Cancelar')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
+                Tables\Actions\Action::make('bill_and_pay')
+                    ->label('Factura y Pago')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('warning')
                     ->visible(fn ($record) => $record->status === SubscriptionPeriodStatus::PENDING)
-                    ->action(function ($record) {
-                        $record->status = SubscriptionPeriodStatus::CANCELLED;
-                        $record->save();
+                    ->form([
+                        Forms\Components\Textarea::make('work_description')
+                            ->label('Descripción del Trabajo')
+                            ->hint('Opcional')
+                            ->rows(3),
                         
-                        \Filament\Notifications\Notification::make()
-                            ->success()
-                            ->title('Período cancelado')
-                            ->send();
-                    })
-                    ->requiresConfirmation(),
+                        Forms\Components\Section::make('Datos del Pago')
+                            ->schema([
+                                Forms\Components\DatePicker::make('payment_date')
+                                    ->label('Fecha de Pago')
+                                    ->default(now())
+                                    ->required(),
+                                
+                                Forms\Components\Select::make('payment_method')
+                                    ->label('Método de Pago')
+                                    ->options(\App\Enums\PaymentMethod::class)
+                                    ->required(),
+                                
+                                Forms\Components\TextInput::make('transaction_reference')
+                                    ->label('Referencia/Nº Transacción'),
+                            ])
+                            ->columns(3),
+                    ])
+                    ->action(function ($record, array $data) {
+                        return \DB::transaction(function () use ($record, $data) {
+                            // 1. Crear factura
+                            $invoice = \App\Models\Invoice::create([
+                                'client_id' => $record->subscription->client_id,
+                                'issue_date' => now(),
+                                'due_date' => now(),
+                                'subtotal' => 0,
+                                'tax_percentage' => 0,
+                                'tax_amount' => 0,
+                                'total' => 0,
+                                'status' => 'draft',
+                            ]);
+                            
+                            // 2. Agregar item
+                            $description = $record->subscription->service->name . " - " . $record->period_label;
+                            if (!empty($data['work_description'])) {
+                                $description .= "\n" . $data['work_description'];
+                            }
+                            
+                            $invoice->invoiceItems()->create([
+                                'description' => $description,
+                                'quantity' => 1,
+                                'unit_price' => $record->amount,
+                                'subtotal' => $record->amount,
+                                'itemable_type' => \App\Models\SubscriptionPeriod::class,
+                                'itemable_id' => $record->id,
+                            ]);
+                            
+                            // 3. Calcular totales
+                            $invoice->calculateTotals();
+                            
+                            // 4. Vincular período a factura
+                            $record->invoice_id = $invoice->id;
+                            if (!empty($data['work_description'])) {
+                                $record->work_description = $data['work_description'];
+                            }
+                            $record->save();
+                            
+                            // 5. Registrar pago
+                            $invoice->payments()->create([
+                                'amount' => $invoice->total,
+                                'payment_date' => $data['payment_date'],
+                                'payment_method' => $data['payment_method'],
+                                'transaction_reference' => $data['transaction_reference'] ?? null,
+                            ]);
+                            
+                            // 6. Marcar factura y período como pagados
+                            $invoice->markAsPaid();
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('¡Cobro registrado!')
+                                ->body("Factura {$invoice->invoice_number} creada y pagada")
+                                ->send();
+                        });
+                    }),
                 
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->hiddenLabel()
+                    ->visible(false),
+                
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn ($record) => !$record->invoice_id)
+                    ->tooltip(fn ($record) => $record->invoice_id ? 'No se puede eliminar: tiene factura vinculada' : null),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function ($records) {
+                            $hasInvoiced = $records->filter(fn ($r) => $r->invoice_id)->count();
+                            if ($hasInvoiced > 0) {
+                                \Filament\Notifications\Notification::make()
+                                    ->danger()
+                                    ->title('No se pueden eliminar')
+                                    ->body("$hasInvoiced período(s) tienen facturas vinculadas")
+                                    ->send();
+                                return false;
+                            }
+                        }),
                 ]),
             ]);
     }
