@@ -20,16 +20,8 @@
         }
     </style>
 
-    {{-- Información de la factura --}}
+    {{-- Información del registro de horas --}}
     <div class="mb-6">
         {{ $this->infolist }}
     </div>
-
-    {{-- Items y Pagos --}}
-    <x-filament-panels::resources.relation-managers
-        :active-manager="$this->activeRelationManager"
-        :managers="$this->getRelationManagers()"
-        :owner-record="$this->record"
-        :page-class="static::class"
-    />
 </x-filament-panels::page>

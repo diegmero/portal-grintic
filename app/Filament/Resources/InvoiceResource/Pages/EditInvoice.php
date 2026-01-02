@@ -14,6 +14,22 @@ class EditInvoice extends EditRecord
     
     protected static string $view = 'filament.resources.invoice-resource.pages.edit-invoice';
 
+    public function mount(int | string $record): void
+    {
+        parent::mount($record);
+        
+        // Proteger facturas pagadas: redirigir a View
+        if ($this->record->status === \App\Enums\InvoiceStatus::PAID) {
+            \Filament\Notifications\Notification::make()
+                ->warning()
+                ->title('Factura pagada')
+                ->body('Las facturas pagadas no pueden ser editadas.')
+                ->send();
+            
+            $this->redirect(InvoiceResource::getUrl('view', ['record' => $this->record]));
+        }
+    }
+
     #[\Livewire\Attributes\On('$refresh')]
     public function refreshRecord(): void
     {
