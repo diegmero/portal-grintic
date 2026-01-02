@@ -133,7 +133,10 @@ class ProjectResource extends Resource
                     ->label('Facturar Proyecto')
                     ->icon('heroicon-o-document-text')
                     ->color('success')
-                    ->visible(fn ($record) => $record->status === ProjectStatus::DONE)
+                    ->visible(fn ($record) => 
+                        $record->status === ProjectStatus::DONE && 
+                        !$record->invoiceItems()->exists()
+                    )
                     ->action(function ($record) {
                         return \DB::transaction(function () use ($record) {
                             // Crear factura (invoice_number se genera automáticamente)

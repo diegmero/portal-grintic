@@ -51,11 +51,6 @@ class SubscriptionsRelationManager extends RelationManager
                     ->default(now())
                     ->required(),
                 
-                Forms\Components\DatePicker::make('next_billing_date')
-                    ->label('Próxima Facturación')
-                    ->default(now()->addMonth())
-                    ->required(),
-                
                 Forms\Components\Select::make('status')
                     ->label('Estado')
                     ->options(SubscriptionStatus::class)
@@ -86,8 +81,8 @@ class SubscriptionsRelationManager extends RelationManager
                     ->label('Ciclo')
                     ->badge(),
                 
-                Tables\Columns\TextColumn::make('next_billing_date')
-                    ->label('Próxima Fact.')
+                Tables\Columns\TextColumn::make('started_at')
+                    ->label('Inicio')
                     ->date('d/m/Y'),
                 
                 Tables\Columns\TextColumn::make('status')

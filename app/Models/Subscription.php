@@ -19,7 +19,6 @@ class Subscription extends Model
         'service_id',
         'custom_price',
         'billing_cycle',
-        'next_billing_date',
         'started_at',
         'cancelled_at',
         'status',
@@ -29,7 +28,6 @@ class Subscription extends Model
         'billing_cycle' => BillingCycle::class,
         'status' => SubscriptionStatus::class,
         'custom_price' => 'decimal:2',
-        'next_billing_date' => 'date',
         'started_at' => 'date',
         'cancelled_at' => 'date',
     ];
@@ -65,11 +63,5 @@ class Subscription extends Model
     public function scopeActive($query)
     {
         return $query->where('status', SubscriptionStatus::ACTIVE);
-    }
-
-    public function scopeDueForBilling($query)
-    {
-        return $query->where('status', SubscriptionStatus::ACTIVE)
-                     ->whereDate('next_billing_date', '<=', now());
     }
 }

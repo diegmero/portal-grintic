@@ -209,21 +209,60 @@ class InvoiceResource extends Resource
                     })
                     ->requiresConfirmation(),
                 
-                Tables\Actions\Action::make('mark_paid')
-                    ->label('Marcar Pagada')
-                    ->icon('heroicon-o-check-circle')
+                Tables\Actions\Action::make('registerPayment')
+                    ->label('Registrar Pago')
+                    ->icon('heroicon-o-banknotes')
                     ->color('success')
-                    ->visible(fn ($record) => !$record->isPaid())
-                    ->action(function ($record) {
-                        $record->status = InvoiceStatus::PAID;
-                        $record->save();
+                    ->visible(fn ($record) => $record->status !== \App\Enums\InvoiceStatus::PAID)
+                    ->form([
+                        Forms\Components\DatePicker::make('payment_date')
+                            ->label('Fecha de Pago')
+                            ->default(now())
+                            ->required(),
+                        Forms\Components\Select::make('payment_method')
+                            ->label('Método de Pago')
+                            ->options(\App\Enums\PaymentMethod::class)
+                            ->required(),
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Monto')
+                            ->prefix('$')
+                            ->default(fn ($record) => $record->total)
+                            ->readOnly(),
+                        Forms\Components\TextInput::make('transaction_reference')
+                            ->label('Referencia')
+                            ->required(),
+                        Forms\Components\FileUpload::make('attachment_path')
+                            ->label('Comprobante')
+                            ->disk('local')
+                            ->directory('payments')
+                            ->visibility('private')
+                            ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'])
+                            ->maxSize(3072)
+                            ->required()
+                            ->columnSpan('full')
+                            ->hint('PDF o imagen, máximo 3MB'),
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notas')
+                            ->rows(2)
+                            ->columnSpan('full'),
+                    ])
+                    ->action(function ($record, array $data) {
+                        $record->payments()->create([
+                            'payment_date' => $data['payment_date'],
+                            'payment_method' => $data['payment_method'],
+                            'amount' => $data['amount'],
+                            'transaction_reference' => $data['transaction_reference'],
+                            'attachment_path' => $data['attachment_path'],
+                            'notes' => $data['notes'],
+                        ]);
+                        
+                        $record->update(['status' => \App\Enums\InvoiceStatus::PAID]);
                         
                         \Filament\Notifications\Notification::make()
+                            ->title('Pago registrado correctamente')
                             ->success()
-                            ->title('Factura marcada como pagada')
                             ->send();
-                    })
-                    ->requiresConfirmation(),
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -2,22 +2,24 @@
 
 namespace App\Enums;
 
-enum PaymentMethod: string
-{
-    case BANK_TRANSFER = 'bank_transfer';
-    case CASH = 'cash';
-    case CREDIT_CARD = 'credit_card';
-    case PAYPAL = 'paypal';
-    case OTHER = 'other';
+use Filament\Support\Contracts\HasLabel;
 
-    public function label(): string
+enum PaymentMethod: string implements HasLabel
+{
+    case TRANSFERENCIA_BANCARIA = 'bank_transfer';
+    case EFECTIVO = 'cash';
+    case BOLD_LINK = 'bold';
+    case MERCADO_PAGO = 'mercadopago';
+    case OTRO = 'other';
+
+    public function getLabel(): ?string
     {
         return match($this) {
-            self::BANK_TRANSFER => 'Transferencia Bancaria',
-            self::CASH => 'Efectivo',
-            self::CREDIT_CARD => 'Tarjeta de Crédito',
-            self::PAYPAL => 'PayPal',
-            self::OTHER => 'Otro',
+            self::TRANSFERENCIA_BANCARIA => 'Transferencia Bancaria',
+            self::EFECTIVO => 'Efectivo',
+            self::BOLD_LINK => 'Bold',
+            self::MERCADO_PAGO => 'Mercado Pago',
+            self::OTRO => 'Otro',
         };
     }
 }

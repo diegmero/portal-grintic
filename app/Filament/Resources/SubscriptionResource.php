@@ -182,7 +182,7 @@ class SubscriptionResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('next_billing_date', 'asc');
+            ->defaultSort('started_at', 'desc');
     }
     
     public static function infolist(Infolist $infolist): Infolist

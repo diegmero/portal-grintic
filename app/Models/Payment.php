@@ -19,6 +19,7 @@ class Payment extends Model
         'payment_method',
         'transaction_reference',
         'attachment_path',
+        'attachment_original_name',
         'notes',
     ];
 

@@ -78,11 +78,21 @@ class PaymentsRelationManager extends RelationManager
                     ->label('Referencia')
                     ->limit(20),
                 
-                Tables\Columns\IconColumn::make('attachment_path')
+                Tables\Columns\TextColumn::make('attachment_path')
                     ->label('Comprobante')
-                    ->boolean()
-                    ->trueIcon('heroicon-o-document')
-                    ->falseIcon('heroicon-o-x-mark'),
+                    ->formatStateUsing(fn ($state) => $state ? '📎 Ver Adjunto' : '-')
+                    ->color(fn ($state) => $state ? 'info' : 'gray')
+                    ->action(
+                        Tables\Actions\Action::make('preview')
+                            ->visible(fn ($record) => !empty($record->attachment_path))
+                            ->modalContent(fn ($record) => view('filament.components.file-preview', [
+                                'url' => route('files.payments.view', ['filename' => basename($record->attachment_path)]),
+                                'type' => \Illuminate\Support\Str::endsWith($record->attachment_path, '.pdf') ? 'pdf' : 'image',
+                            ]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn ($action) => $action->label('Cerrar'))
+                            ->modalWidth('5xl')
+                    ),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),

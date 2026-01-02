@@ -23,8 +23,10 @@ class PaymentResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Pagos';
     
-    protected static ?string $navigationGroup = 'Facturación';
+    protected static ?string $navigationGroup = 'Gestión Financiera';
     
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?int $navigationSort = 23;
 
     public static function form(Form $form): Form
@@ -64,10 +66,7 @@ class PaymentResource extends Resource
                             ->maxLength(255),
                         
                         Forms\Components\FileUpload::make('attachment_path')
-                            ->label('Comprobante')
-                            ->directory('payments')
-                            ->visibility('private')
-                            ->acceptedFileTypes(['image/*', 'application/pdf'])
+                            ->label('Comprobante de Pago')
                             ->columnSpan('full'),
                         
                         Forms\Components\Textarea::make('notes')
@@ -112,6 +111,22 @@ class PaymentResource extends Resource
                     ->label('Referencia')
                     ->limit(20)
                     ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('attachment_path')
+                    ->label('Comprobante')
+                    ->formatStateUsing(fn ($state) => $state ? '📎 Ver Adjunto' : '-')
+                    ->color(fn ($state) => $state ? 'info' : 'gray')
+                    ->action(
+                        Tables\Actions\Action::make('preview')
+                            ->visible(fn ($record) => !empty($record->attachment_path))
+                            ->modalContent(fn ($record) => view('filament.components.file-preview', [
+                                'url' => route('files.payments.view', ['filename' => basename($record->attachment_path)]),
+                                'type' => \Illuminate\Support\Str::endsWith($record->attachment_path, '.pdf') ? 'pdf' : 'image',
+                            ]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn ($action) => $action->label('Cerrar'))
+                            ->modalWidth('5xl')
+                    ),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('payment_method')
