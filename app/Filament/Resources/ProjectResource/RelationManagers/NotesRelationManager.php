@@ -38,17 +38,20 @@ class NotesRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('content')
                     ->label('Nota')
-                    ->wrap()
-                    ->limit(100),
+                    ->limit(80)
+                    ->width('50%'),
                 
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Autor')
-                    ->default('Sistema'),
+                    ->default('Sistema')
+                    ->width('25%'),
                 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Fecha')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable(),
+                    ->dateTime('d/m/Y h:i A')
+                    ->timezone('America/Bogota')
+                    ->sortable()
+                    ->width('25%'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()

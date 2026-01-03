@@ -197,7 +197,7 @@ class InvoiceResource extends Resource
                     ->color('info')
                     ->visible(fn ($record) => $record->status === InvoiceStatus::DRAFT)
                     ->action(function ($record) {
-                        $record->status = InvoiceStatus::SENT;
+                        $record->status = InvoiceStatus::INVOICED;
                         $record->save();
                         
                         \Filament\Notifications\Notification::make()

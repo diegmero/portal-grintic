@@ -237,7 +237,7 @@ class WorkLogResource extends Resource
                                 'tax_percentage' => 0,
                                 'tax_amount' => 0,
                                 'total' => 0,
-                                'status' => \App\Enums\InvoiceStatus::SENT,
+                                'status' => \App\Enums\InvoiceStatus::INVOICED,
                             ]);
                             
                             // Agregar item
@@ -315,6 +315,7 @@ class WorkLogResource extends Resource
                             ->schema([
                                 Infolists\Components\TextEntry::make('description')
                                     ->hiddenLabel()
+                                    ->html()
                                     ->columnSpanFull(),
                             ]),
                     ])

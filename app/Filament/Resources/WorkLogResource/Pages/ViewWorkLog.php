@@ -82,6 +82,7 @@ class ViewWorkLog extends ViewRecord
                     ->schema([
                         Components\TextEntry::make('description')
                             ->hiddenLabel()
+                            ->html()
                             ->prose()
                             ->columnSpanFull(),
                     ])

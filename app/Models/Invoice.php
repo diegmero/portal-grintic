@@ -55,7 +55,14 @@ class Invoice extends Model
                          $workLog->save();
                      }
                 }
+                // Nota: Proyectos no cambian de estado al eliminar factura
             }
+            
+            // Eliminar items de la factura para evitar datos huérfanos
+            $invoice->invoiceItems()->delete();
+            
+            // Eliminar pagos asociados
+            $invoice->payments()->delete();
         });
 
         static::updated(function (Invoice $invoice) {
@@ -115,7 +122,7 @@ class Invoice extends Model
                 $this->status = \App\Enums\InvoiceStatus::PARTIALLY_PAID;
             } elseif ($paid == 0 && $this->status === \App\Enums\InvoiceStatus::PAID) {
                 // Si estaba pagada pero borraron pagos y quedó en 0
-                $this->status = \App\Enums\InvoiceStatus::SENT;
+                $this->status = \App\Enums\InvoiceStatus::INVOICED;
             }
         }
         
@@ -193,14 +200,14 @@ class Invoice extends Model
     public function scopeUnpaid($query)
     {
         return $query->whereIn('status', [
-            InvoiceStatus::SENT,
+            InvoiceStatus::INVOICED,
             InvoiceStatus::OVERDUE
         ]);
     }
 
     public function scopeOverdue($query)
     {
-        return $query->where('status', InvoiceStatus::SENT)
+        return $query->where('status', InvoiceStatus::INVOICED)
                      ->whereDate('due_date', '<', now());
     }
 

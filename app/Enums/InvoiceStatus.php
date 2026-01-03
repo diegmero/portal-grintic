@@ -8,7 +8,7 @@ use Filament\Support\Contracts\HasLabel;
 enum InvoiceStatus: string implements HasLabel, HasColor
 {
     case DRAFT = 'draft';
-    case SENT = 'sent';
+    case INVOICED = 'sent'; // El valor DB sigue siendo 'sent' por compatibilidad
     case PAID = 'paid';
     case PARTIALLY_PAID = 'partially_paid';
     case OVERDUE = 'overdue';
@@ -18,7 +18,7 @@ enum InvoiceStatus: string implements HasLabel, HasColor
     {
         return match($this) {
             self::DRAFT => 'Borrador',
-            self::SENT => 'Enviada',
+            self::INVOICED => 'Facturado',
             self::PAID => 'Pagado',
             self::PARTIALLY_PAID => 'Pago Parcial',
             self::OVERDUE => 'Vencida',
@@ -30,7 +30,7 @@ enum InvoiceStatus: string implements HasLabel, HasColor
     {
         return match($this) {
             self::DRAFT => 'gray',
-            self::SENT => 'info',
+            self::INVOICED => 'info',
             self::PAID => 'success',
             self::PARTIALLY_PAID => 'warning',
             self::OVERDUE => 'danger',

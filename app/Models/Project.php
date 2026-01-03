@@ -19,6 +19,9 @@ class Project extends Model
         'client_id',
         'name',
         'description',
+        'technologies',
+        'infrastructure',
+        'technical_notes',
         'total_budget',
         'status',
         'started_at',
@@ -32,6 +35,8 @@ class Project extends Model
         'started_at' => 'date',
         'completed_at' => 'date',
         'deadline' => 'date',
+        'technologies' => 'array',
+        'infrastructure' => 'array',
     ];
 
     // Relaciones

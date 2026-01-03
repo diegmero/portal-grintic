@@ -37,23 +37,7 @@ class InvoicesRelationManager extends RelationManager
                 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
-                    ->badge()
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'draft' => 'Borrador',
-                        'sent' => 'Enviada',
-                        'paid' => 'Pagada',
-                        'overdue' => 'Vencida',
-                        'cancelled' => 'Cancelada',
-                        default => $state,
-                    })
-                    ->color(fn ($state) => match($state) {
-                        'draft' => 'gray',
-                        'sent' => 'info',
-                        'paid' => 'success',
-                        'overdue' => 'danger',
-                        'cancelled' => 'warning',
-                        default => 'gray',
-                    }),
+                    ->badge(),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('create_invoice')
@@ -69,7 +53,8 @@ class InvoicesRelationManager extends RelationManager
                     ->action(function () {
                         $project = $this->getOwnerRecord();
                         
-                        return \DB::transaction(function () use ($project) {
+                        $invoice = \DB::transaction(function () use ($project) {
+                            // Crear factura temporal en DRAFT
                             $invoice = \App\Models\Invoice::create([
                                 'client_id' => $project->client_id,
                                 'issue_date' => now(),
@@ -78,12 +63,18 @@ class InvoicesRelationManager extends RelationManager
                                 'tax_percentage' => 0,
                                 'tax_amount' => 0,
                                 'total' => 0,
-                                'status' => 'draft',
+                                'status' => \App\Enums\InvoiceStatus::DRAFT,
                             ]);
                             
+                            // Limpiar HTML de la descripción
                             $description = "Proyecto: {$project->name}";
                             if ($project->description) {
-                                $description .= " - {$project->description}";
+                                $cleanDescription = strip_tags($project->description);
+                                $cleanDescription = preg_replace('/\s+/', ' ', $cleanDescription);
+                                $cleanDescription = trim($cleanDescription);
+                                if (strlen($cleanDescription) > 0) {
+                                    $description .= " - " . substr($cleanDescription, 0, 150);
+                                }
                             }
                             
                             $invoice->invoiceItems()->create([
@@ -95,23 +86,33 @@ class InvoicesRelationManager extends RelationManager
                                 'itemable_id' => $project->id,
                             ]);
                             
-                            $invoice->calculateTotals();
+                            // Refrescar y calcular totales manualmente
+                            $invoice->refresh();
+                            $invoice->subtotal = $invoice->invoiceItems->sum('subtotal');
+                            $invoice->tax_amount = $invoice->subtotal * ($invoice->tax_percentage / 100);
+                            $invoice->total = $invoice->subtotal + $invoice->tax_amount;
+                            // Cambiar a FACTURADO (SENT) ya que se generó la factura
+                            $invoice->status = \App\Enums\InvoiceStatus::INVOICED;
+                            $invoice->save();
                             
                             \Filament\Notifications\Notification::make()
                                 ->success()
                                 ->title('Factura creada')
-                                ->body("Factura {$invoice->invoice_number} generada exitosamente")
+                                ->body("Factura {$invoice->invoice_number} generada y facturada")
                                 ->send();
                             
-                            return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                            return $invoice;
                         });
+                        
+                        // Redirect a Vista (no Edit)
+                        return redirect(\App\Filament\Resources\InvoiceResource::getUrl('view', ['record' => $invoice]));
                     }),
             ])
             ->actions([
                 Tables\Actions\Action::make('view')
                     ->label('Ver')
                     ->icon('heroicon-o-eye')
-                    ->url(fn ($record) => route('filament.admin.resources.invoices.edit', ['record' => $record])),
+                    ->url(fn ($record) => \App\Filament\Resources\InvoiceResource::getUrl('view', ['record' => $record])),
             ]);
     }
 }

@@ -25,11 +25,12 @@ class ViewProject extends ViewRecord
                 ->color('success')
                 ->visible(fn () => 
                     $this->record->status === ProjectStatus::DONE && 
-                    !$this->record->invoiceItems()->exists()
+                    !$this->record->invoiceItems()->whereHas('invoice')->exists()
                 )
                 ->requiresConfirmation()
                 ->action(function () {
-                    return \DB::transaction(function () {
+                    $invoice = \DB::transaction(function () {
+                        // Crear factura en estado DRAFT inicialmente
                         $invoice = \App\Models\Invoice::create([
                             'client_id' => $this->record->client_id,
                             'issue_date' => now(),
@@ -38,12 +39,18 @@ class ViewProject extends ViewRecord
                             'tax_percentage' => 0,
                             'tax_amount' => 0,
                             'total' => 0,
-                            'status' => 'draft',
+                            'status' => \App\Enums\InvoiceStatus::DRAFT,
                         ]);
                         
+                        // Descripción limpia sin HTML
                         $description = "Proyecto: {$this->record->name}";
                         if ($this->record->description) {
-                            $description .= " - {$this->record->description}";
+                            $cleanDescription = strip_tags($this->record->description);
+                            $cleanDescription = preg_replace('/\s+/', ' ', $cleanDescription); // Múltiples espacios a uno
+                            $cleanDescription = trim($cleanDescription);
+                            if (strlen($cleanDescription) > 0) {
+                                $description .= " - " . substr($cleanDescription, 0, 150);
+                            }
                         }
                         
                         $invoice->invoiceItems()->create([
@@ -55,16 +62,27 @@ class ViewProject extends ViewRecord
                             'itemable_id' => $this->record->id,
                         ]);
                         
-                        $invoice->calculateTotals();
+                        // Refrescar para cargar items
+                        $invoice->refresh();
+                        
+                        // Calcular totales manualmente sin cambiar estado
+                        $invoice->subtotal = $invoice->invoiceItems->sum('subtotal');
+                        $invoice->tax_amount = $invoice->subtotal * ($invoice->tax_percentage / 100);
+                        $invoice->total = $invoice->subtotal + $invoice->tax_amount;
+                        $invoice->status = \App\Enums\InvoiceStatus::INVOICED;
+                        $invoice->save();
                         
                         \Filament\Notifications\Notification::make()
                             ->success()
                             ->title('Factura generada')
-                            ->body("Factura {$invoice->invoice_number} creada")
+                            ->body("Factura {$invoice->invoice_number} creada con estado Enviado")
                             ->send();
                         
-                        return redirect()->route('filament.admin.resources.invoices.edit', ['record' => $invoice]);
+                        return $invoice;
                     });
+                    
+                    // Redirect fuera de la transacción
+                    return redirect(\App\Filament\Resources\InvoiceResource::getUrl('view', ['record' => $invoice]));
                 }),
         ];
     }
@@ -73,35 +91,27 @@ class ViewProject extends ViewRecord
     {
         return $infolist
             ->schema([
-                Components\Section::make('Información del Proyecto')
-                    ->icon('heroicon-o-folder')
+                Components\Grid::make(3)
                     ->schema([
-                        Components\TextEntry::make('name')
-                            ->label('Nombre')
-                            ->size(Components\TextEntry\TextEntrySize::Large)
-                            ->weight('bold'),
-                        Components\TextEntry::make('client.company_name')
-                            ->label('Cliente')
-                            ->icon('heroicon-o-building-office'),
-                        Components\TextEntry::make('status')
-                            ->label('Estado')
-                            ->badge(),
-                        Components\TextEntry::make('description')
-                            ->label('Descripción')
-                            ->placeholder('Sin descripción'),
-                    ])
-                    ->columns(1),
-                
-                Components\Section::make('Estadísticas')
-                    ->icon('heroicon-o-chart-bar')
-                    ->schema([
-                        Components\Grid::make(2)
+                        Components\Section::make('Información del Proyecto')
+                            ->icon('heroicon-o-folder')
+                            ->schema([
+                                Components\TextEntry::make('name')
+                                    ->label('Nombre'),
+                                Components\TextEntry::make('client.company_name')
+                                    ->label('Cliente'),
+                                Components\TextEntry::make('status')
+                                    ->label('Estado')
+                                    ->badge(),
+                            ])
+                            ->columnSpan(1),
+                        
+                        Components\Section::make('Métricas')
+                            ->icon('heroicon-o-chart-bar')
                             ->schema([
                                 Components\TextEntry::make('progress')
                                     ->label('Progreso')
                                     ->state(fn ($record) => $record->progress . '%')
-                                    ->size(Components\TextEntry\TextEntrySize::Large)
-                                    ->weight('bold')
                                     ->color(fn ($record) => match(true) {
                                         $record->progress >= 100 => 'success',
                                         $record->progress >= 50 => 'warning',
@@ -110,42 +120,43 @@ class ViewProject extends ViewRecord
                                 Components\TextEntry::make('total_budget')
                                     ->label('Presupuesto')
                                     ->money('USD')
-                                    ->size(Components\TextEntry\TextEntrySize::Large)
-                                    ->weight('bold')
                                     ->color('success'),
-                            ]),
+                                Components\TextEntry::make('tasks_count')
+                                    ->label('Tareas')
+                                    ->state(fn ($record) => $record->tasks()->count() . ' totales'),
+                            ])
+                            ->columnSpan(1),
+                        
+                        Components\Section::make('Fechas')
+                            ->icon('heroicon-o-calendar')
+                            ->schema([
+                                Components\TextEntry::make('started_at')
+                                    ->label('Inicio')
+                                    ->date('d/m/Y')
+                                    ->placeholder('No definida'),
+                                Components\TextEntry::make('deadline')
+                                    ->label('Fecha Límite')
+                                    ->date('d/m/Y')
+                                    ->placeholder('Sin fecha límite')
+                                    ->color(fn ($record) => $record?->is_overdue ? 'danger' : null),
+                                Components\TextEntry::make('days_until_deadline')
+                                    ->label('Días Restantes')
+                                    ->state(function ($record) {
+                                        if (!$record->deadline) return 'Sin fecha límite';
+                                        $days = $record->days_until_deadline;
+                                        if ($days < 0) return abs($days) . ' días vencido';
+                                        if ($days === 0) return 'Vence hoy';
+                                        return $days . ' días';
+                                    })
+                                    ->color(fn ($record) => match(true) {
+                                        !$record->deadline => 'gray',
+                                        $record->is_overdue => 'danger',
+                                        $record->days_until_deadline <= 7 => 'warning',
+                                        default => 'success',
+                                    }),
+                            ])
+                            ->columnSpan(1),
                     ]),
-                
-                Components\Section::make('Fechas')
-                    ->icon('heroicon-o-calendar')
-                    ->schema([
-                        Components\TextEntry::make('started_at')
-                            ->label('Inicio')
-                            ->date('d/m/Y')
-                            ->placeholder('No definida'),
-                        Components\TextEntry::make('deadline')
-                            ->label('Fecha Límite')
-                            ->date('d/m/Y')
-                            ->placeholder('No definida')
-                            ->color(fn ($record) => $record?->is_overdue ? 'danger' : null),
-                        Components\TextEntry::make('days_until_deadline')
-                            ->label('Días Restantes')
-                            ->state(function ($record) {
-                                if (!$record->deadline) return 'Sin fecha límite';
-                                $days = $record->days_until_deadline;
-                                if ($days < 0) return abs($days) . ' días vencido';
-                                if ($days === 0) return 'Vence hoy';
-                                return $days . ' días';
-                            })
-                            ->color(fn ($record) => match(true) {
-                                !$record->deadline => 'gray',
-                                $record->is_overdue => 'danger',
-                                $record->days_until_deadline <= 7 => 'warning',
-                                default => 'success',
-                            })
-                            ->weight('bold'),
-                    ])
-                    ->columns(1),
             ]);
     }
 
@@ -153,8 +164,8 @@ class ViewProject extends ViewRecord
     {
         return [
             \App\Filament\Resources\ProjectResource\RelationManagers\TasksRelationManager::class,
-            \App\Filament\Resources\ProjectResource\RelationManagers\NotesRelationManager::class,
-            \App\Filament\Resources\ProjectResource\RelationManagers\LinksRelationManager::class,
+            \App\Filament\Resources\ProjectResource\RelationManagers\DocumentationRelationManager::class,
+            \App\Filament\Resources\ProjectResource\RelationManagers\ResourcesRelationManager::class,
             \App\Filament\Resources\ProjectResource\RelationManagers\InvoicesRelationManager::class,
         ];
     }

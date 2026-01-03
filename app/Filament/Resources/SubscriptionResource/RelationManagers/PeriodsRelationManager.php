@@ -169,7 +169,7 @@ class PeriodsRelationManager extends RelationManager
                                 'tax_percentage' => 0,
                                 'tax_amount' => 0,
                                 'total' => 0,
-                                'status' => \App\Enums\InvoiceStatus::SENT,
+                                'status' => \App\Enums\InvoiceStatus::INVOICED,
                             ]);
                             
                             // Agregar item
@@ -248,7 +248,7 @@ class PeriodsRelationManager extends RelationManager
                                 'tax_percentage' => 0,
                                 'tax_amount' => 0,
                                 'total' => 0,
-                                'status' => \App\Enums\InvoiceStatus::SENT,
+                                'status' => \App\Enums\InvoiceStatus::INVOICED,
                             ]);
                             
                             // 2. Agregar item

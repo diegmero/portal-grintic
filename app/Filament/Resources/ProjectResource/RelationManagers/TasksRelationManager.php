@@ -56,20 +56,24 @@ class TasksRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('title')
                     ->label('Tarea')
                     ->searchable()
-                    ->limit(40),
+                    ->limit(40)
+                    ->width('50%'),
                 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
-                    ->badge(),
+                    ->badge()
+                    ->width('25%'),
                 
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Vence')
                     ->date('d/m/Y')
-                    ->color(fn ($record) => $record->due_date?->isPast() && $record->status !== TaskStatus::COMPLETED ? 'danger' : null),
+                    ->color(fn ($record) => $record->due_date?->isPast() && $record->status !== TaskStatus::COMPLETED ? 'danger' : null)
+                    ->width('25%'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Nueva Tarea'),
+                    ->label('Nueva Tarea')
+                    ->after(fn () => $this->dispatch('$refresh')),
             ])
             ->actions([
                 Tables\Actions\Action::make('complete')
@@ -77,18 +81,27 @@ class TasksRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn ($record) => $record->status !== TaskStatus::COMPLETED)
-                    ->action(fn ($record) => $record->update(['status' => TaskStatus::COMPLETED])),
+                    ->action(function ($record) {
+                        $record->update(['status' => TaskStatus::COMPLETED]);
+                        $this->dispatch('$refresh');
+                    }),
                 Tables\Actions\Action::make('in_progress')
                     ->label('En Progreso')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
                     ->visible(fn ($record) => $record->status === TaskStatus::PENDING)
-                    ->action(fn ($record) => $record->update(['status' => TaskStatus::IN_PROGRESS])),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                    ->action(function ($record) {
+                        $record->update(['status' => TaskStatus::IN_PROGRESS]);
+                        $this->dispatch('$refresh');
+                    }),
+                Tables\Actions\EditAction::make()
+                    ->after(fn () => $this->dispatch('$refresh')),
+                Tables\Actions\DeleteAction::make()
+                    ->after(fn () => $this->dispatch('$refresh')),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()
+                    ->after(fn () => $this->dispatch('$refresh')),
             ]);
     }
 }
