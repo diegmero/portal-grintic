@@ -84,6 +84,22 @@ class WorkLogResource extends Resource
                                     ->required()
                                     ->rows(5),
                             ]),
+
+                        Forms\Components\Section::make('Adjuntos')
+                            ->schema([
+                                Forms\Components\FileUpload::make('attachment_path')
+                                    ->label('Informe Soporte')
+                                    ->helperText('Máximo 10 archivos de 5MB c/u. Visible para el cliente.')
+                                    ->multiple()
+                                    ->maxFiles(10)
+                                    ->maxSize(5120)
+                                    ->downloadable()
+                                    ->openable()
+                                    ->reorderable()
+                                    ->appendFiles()
+                                    ->disabled(fn ($record) => $record && $record->status === WorkLogStatus::PAID),
+                            ])
+                            ->collapsible(),
                     ])
                     ->columnSpan(2),
 
@@ -160,6 +176,28 @@ class WorkLogResource extends Resource
                     ->label('Horas')
                     ->suffix(' hrs')
                     ->sortable(),
+                
+                Tables\Columns\TextColumn::make('attachment_path')
+                    ->label('Informe')
+                    ->state(fn ($record) => !empty($record->attachment_path) ? 'show' : null)
+                    ->formatStateUsing(fn ($state, $record) => $state ? '📎 Ver (' . count($record->attachment_path) . ')' : '')
+                    ->color(fn ($state) => $state ? 'info' : 'gray')
+                    ->badge()
+                    ->action(
+                        Tables\Actions\Action::make('preview')
+                            ->visible(fn ($record) => !empty($record->attachment_path))
+                            ->modalContent(fn ($record) => view('filament.components.file-gallery', [
+                                'files' => collect($record->attachment_path ?? [])->map(fn ($path) => [
+                                    'url' => \Illuminate\Support\Facades\Storage::url($path),
+                                    'type' => \Illuminate\Support\Str::endsWith($path, '.pdf') ? 'pdf' : 'image',
+                                    'name' => basename($path),
+                                ])->values()->toArray(),
+                            ]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn ($action) => $action->label('Cerrar'))
+                            ->modalWidth('5xl')
+                            ->modalHeading('Informes de Soporte')
+                    ),
                 
                 Tables\Columns\TextColumn::make('hourly_rate')
                     ->label('Tarifa')
@@ -317,6 +355,16 @@ class WorkLogResource extends Resource
                                     ->hiddenLabel()
                                     ->html()
                                     ->columnSpanFull(),
+                            ]),
+
+                        Infolists\Components\Section::make('Adjuntos')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('attachment_path')
+                                    ->label('Informe Soporte')
+                                    ->formatStateUsing(fn ($state) => $state ? '📎 Descargar Informe' : 'Sin informe')
+                                    ->url(fn ($record) => $record->attachment_path ? \Illuminate\Support\Facades\Storage::url($record->attachment_path) : null)
+                                    ->openUrlInNewTab()
+                                    ->color(fn ($state) => $state ? 'info' : 'gray'),
                             ]),
                     ])
                     ->columnSpan(2),

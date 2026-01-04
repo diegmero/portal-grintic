@@ -69,7 +69,7 @@ class InvoiceItemsRelationManager extends RelationManager
                 
                 return match($record->itemable_type) {
                     'App\Models\Project' => \App\Filament\Portal\Resources\ProjectResource::getUrl('view', ['record' => $record->itemable]),
-                    'App\Models\WorkLog' => \App\Filament\Portal\Resources\WorkLogResource::getUrl('view', ['record' => $record->itemable]),
+                    'App\Models\WorkLog' => null, // WorkLogs are managed via modal in Portal, no separate view page
                     'App\Models\SubscriptionPeriod' => \App\Filament\Portal\Resources\SubscriptionResource::getUrl('view', ['record' => $record->itemable->subscription]), 
                     default => null,
                 };

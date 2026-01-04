@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 
 class WorkLogResource extends Resource
 {
@@ -21,6 +23,32 @@ class WorkLogResource extends Resource
     protected static ?string $modelLabel = 'Horas Soporte';
     protected static ?string $pluralModelLabel = 'Horas Soporte';
     protected static ?string $navigationGroup = 'Soporte';
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Detalle del Soporte')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('service.name')
+                            ->label('Servicio'),
+                        Infolists\Components\TextEntry::make('worked_at')
+                            ->label('Fecha')
+                            ->date(),
+                        Infolists\Components\TextEntry::make('hours')
+                            ->label('Horas')
+                            ->suffix(' hrs'),
+                        Infolists\Components\TextEntry::make('status')
+                            ->label('Estado')
+                            ->badge(),
+                        Infolists\Components\TextEntry::make('description')
+                            ->label('Descripción')
+                            ->markdown()
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
+            ]);
+    }
 
     public static function form(Form $form): Form
     {
@@ -60,6 +88,27 @@ class WorkLogResource extends Resource
                     ->numeric()
                     ->label('Horas')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('attachment_path')
+                    ->label('Informe')
+                    ->state(fn ($record) => !empty($record->attachment_path) ? 'show' : null)
+                    ->formatStateUsing(fn ($state, $record) => $state ? '📎 Ver (' . count($record->attachment_path) . ')' : '')
+                    ->color(fn ($state) => $state ? 'info' : 'gray')
+                    ->badge()
+                    ->action(
+                        Tables\Actions\Action::make('preview')
+                            ->visible(fn ($record) => !empty($record->attachment_path))
+                            ->modalContent(fn ($record) => view('filament.components.file-gallery', [
+                                'files' => collect($record->attachment_path ?? [])->map(fn ($path) => [
+                                    'url' => \Illuminate\Support\Facades\Storage::url($path),
+                                    'type' => \Illuminate\Support\Str::endsWith($path, '.pdf') ? 'pdf' : 'image',
+                                    'name' => basename($path),
+                                ])->values()->toArray(),
+                            ]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn ($action) => $action->label('Cerrar'))
+                            ->modalWidth('5xl')
+                            ->modalHeading('Informes de Soporte')
+                    ),
                 Tables\Columns\TextColumn::make('invoiceItem.invoice.invoice_number')
                     ->label('Factura')
                     ->placeholder('-')

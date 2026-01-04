@@ -26,6 +26,7 @@ class PortalPanelProvider extends PanelProvider
             ->id('portal')
             ->path('portal')
             ->login()
+            ->profile(\App\Filament\Portal\Pages\Auth\EditProfile::class)
             ->authGuard('client')
             ->colors([
                 'primary' => Color::Indigo,
@@ -55,6 +56,11 @@ class PortalPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->navigationGroups([
+                'Gestión',
+                'Soporte',
+                'Facturación',
             ]);
     }
 }

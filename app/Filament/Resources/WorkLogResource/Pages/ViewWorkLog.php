@@ -75,6 +75,17 @@ class ViewWorkLog extends ViewRecord
                                     ->label('Estado Factura')
                                     ->badge()
                                     ->visible(fn ($record) => $record->invoiceItem !== null),
+                                Components\TextEntry::make('attachment_path')
+                                    ->label('Adjuntos')
+                                    ->formatStateUsing(fn ($state, $record) => view('filament.components.modal-file-viewer', [
+                                        'files' => collect($record->attachment_path ?? [])->map(fn ($path) => [
+                                            'url' => \Illuminate\Support\Facades\Storage::url($path),
+                                            'type' => \Illuminate\Support\Str::endsWith($path, '.pdf') ? 'pdf' : 'image',
+                                            'name' => basename($path),
+                                        ])->values()->toArray(),
+                                        'label' => 'Ver',
+                                    ])->render())
+                                    ->html(),
                             ])
                             ->columnSpan(1),
                     ]),
@@ -89,6 +100,8 @@ class ViewWorkLog extends ViewRecord
                             ->columnSpanFull(),
                     ])
                     ->collapsible(),
+
+
             ]);
     }
 }

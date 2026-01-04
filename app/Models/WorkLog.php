@@ -22,6 +22,7 @@ class WorkLog extends Model
         'description',
         'worked_at',
         'status',
+        'attachment_path',
     ];
 
     protected $casts = [
@@ -29,6 +30,7 @@ class WorkLog extends Model
         'hours' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
         'worked_at' => 'date',
+        'attachment_path' => 'array',
     ];
 
     protected static function booted(): void
