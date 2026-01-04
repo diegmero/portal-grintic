@@ -18,6 +18,7 @@ enum DocumentationCategory: string implements HasLabel, HasColor
     case CREDENTIALS = 'credentials';
     case MEETINGS = 'meetings';
     case CHANGELOG = 'changelog';
+    case ATTACHMENTS = 'attachments';
     case OTHER = 'other';
 
     public function getLabel(): string
@@ -34,6 +35,7 @@ enum DocumentationCategory: string implements HasLabel, HasColor
             self::CREDENTIALS => 'Credenciales',
             self::MEETINGS => 'Reuniones',
             self::CHANGELOG => 'Registro de Cambios',
+            self::ATTACHMENTS => 'Adjuntos',
             self::OTHER => 'Otro',
         };
     }
@@ -52,6 +54,7 @@ enum DocumentationCategory: string implements HasLabel, HasColor
             self::CREDENTIALS => 'info',
             self::MEETINGS => 'info',
             self::CHANGELOG => 'info',
+            self::ATTACHMENTS => 'info',
             self::OTHER => 'info',
         };
     }

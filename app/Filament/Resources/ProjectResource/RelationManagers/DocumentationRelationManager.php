@@ -46,6 +46,18 @@ class DocumentationRelationManager extends RelationManager
                         'link', 'blockquote', 'codeBlock',
                     ])
                     ->columnSpan('full'),
+                
+                Forms\Components\FileUpload::make('attachments')
+                    ->label('Archivos Adjuntos (Opcional)')
+                    ->multiple()
+                    ->maxFiles(3)
+                    ->acceptedFileTypes(['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'])
+                    ->directory('project-documentation')
+                    ->visibility('public')
+                    ->downloadable()
+                    ->previewable()
+                    ->helperText('Máximo 3 archivos. Formatos: PDF, PNG, JPG, JPEG. Tamaño máximo recomendado: 10MB por archivo')
+                    ->columnSpan('full'),
             ]);
     }
 
@@ -67,6 +79,28 @@ class DocumentationRelationManager extends RelationManager
                     ->label('Categoría')
                     ->badge()
                     ->sortable(),
+                
+                Tables\Columns\TextColumn::make('attachments')
+                    ->label('Adjuntos')
+                    ->formatStateUsing(function ($state, $record) {
+                        if (is_array($record->attachments) && count($record->attachments) > 0) {
+                            return '📎';
+                        }
+                        return '-';
+                    })
+                    ->color(fn ($state, $record) => is_array($record->attachments) && count($record->attachments) > 0 ? 'info' : 'gray')
+                    ->tooltip(fn ($state, $record) => is_array($record->attachments) && count($record->attachments) > 0 ? count($record->attachments) . ' archivo(s)' : 'Sin adjuntos')
+                    ->alignCenter()
+                    ->action(
+                        Tables\Actions\Action::make('previewAttachments')
+                            ->visible(fn ($record) => $record->attachments && is_array($record->attachments) && count($record->attachments) > 0)
+                            ->modalContent(fn ($record) => view('filament.components.documentation-attachments-preview', [
+                                'attachments' => $record->attachments,
+                            ]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn ($action) => $action->label('Cerrar'))
+                            ->modalWidth('5xl')
+                    ),
                 
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Autor')

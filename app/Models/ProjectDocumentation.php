@@ -19,10 +19,12 @@ class ProjectDocumentation extends Model
         'title',
         'category',
         'content',
+        'attachments',
     ];
 
     protected $casts = [
         'category' => DocumentationCategory::class,
+        'attachments' => 'array',
     ];
 
     public function project(): BelongsTo
