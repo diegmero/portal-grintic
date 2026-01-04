@@ -165,7 +165,6 @@ class ViewProject extends ViewRecord
         return [
             \App\Filament\Resources\ProjectResource\RelationManagers\TasksRelationManager::class,
             \App\Filament\Resources\ProjectResource\RelationManagers\DocumentationRelationManager::class,
-            \App\Filament\Resources\ProjectResource\RelationManagers\ResourcesRelationManager::class,
             \App\Filament\Resources\ProjectResource\RelationManagers\InvoicesRelationManager::class,
         ];
     }

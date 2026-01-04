@@ -140,10 +140,25 @@ class InvoiceResource extends Resource
                     ->searchable()
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('issue_date')
-                    ->label('Emisión')
-                    ->date('d/m/Y')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('service_type')
+                    ->label('Tipo de Servicio')
+                    ->state(function ($record) {
+                        $items = $record->invoiceItems;
+                        if ($items->isEmpty()) return 'Sin items';
+                        
+                        $types = $items->pluck('itemable_type')->unique()->map(function ($type) {
+                            return match($type) {
+                                'App\Models\Project' => 'Proyecto',
+                                'App\Models\SubscriptionPeriod' => 'Suscripción',
+                                'App\Models\WorkLog' => 'Trabajo',
+                                default => 'Otro',
+                            };
+                        });
+                        
+                        return $types->join(', ');
+                    })
+                    ->badge()
+                    ->color('info'),
                 
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Vencimiento')

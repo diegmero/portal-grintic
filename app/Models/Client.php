@@ -91,6 +91,11 @@ class Client extends Model
         return $this->hasMany(Report::class);
     }
 
+    public function clientNotes(): HasMany
+    {
+        return $this->hasMany(ClientNote::class);
+    }
+
     // Accessor para contacto principal
     public function primaryContact()
     {
