@@ -62,6 +62,17 @@ class ServiceResource extends Resource
                             ->label('Descripción')
                             ->rows(3)
                             ->columnSpan('full'),
+                            
+                        Forms\Components\TagsInput::make('features')
+                            ->label('Características')
+                            ->placeholder('Ej: 10GB SSD, SSL Gratis')
+                            ->columnSpan('full'),
+                            
+                        Forms\Components\KeyValue::make('pricing')
+                            ->label('Precios por Ciclo')
+                            ->keyLabel('Ciclo (monthly, yearly)')
+                            ->valueLabel('Precio')
+                            ->columnSpan('full'),
                     ])
                     ->columns(2),
             ]);

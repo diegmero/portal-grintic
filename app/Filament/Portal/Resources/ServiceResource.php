@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\Eloquent\Model;
 
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
+
 class ServiceResource extends Resource
 {
     protected static ?string $model = Service::class;
@@ -48,6 +51,50 @@ class ServiceResource extends Resource
             ]);
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Detalles del Servicio')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('name')
+                            ->label('Servicio')
+                            ->weight('bold'),
+                        
+                        Infolists\Components\TextEntry::make('type')
+                            ->label('Tipo')
+                            ->badge(),
+                            
+                        Infolists\Components\TextEntry::make('base_price')
+                            ->label('Precio Base')
+                            ->money('USD'),
+                            
+                        Infolists\Components\TextEntry::make('is_active')
+                            ->label('Estado')
+                            ->badge()
+                            ->formatStateUsing(fn (bool $state) => $state ? 'Disponible' : 'No disponible')
+                            ->color(fn (bool $state) => $state ? 'success' : 'danger'),
+
+                        Infolists\Components\TextEntry::make('description')
+                            ->label('Descripción')
+                            ->columnSpanFull(),
+
+                        Infolists\Components\TextEntry::make('features')
+                            ->label('Características Destacadas')
+                            ->listWithLineBreaks()
+                            ->bulleted()
+                            ->columnSpanFull(),
+
+                        Infolists\Components\KeyValueEntry::make('pricing')
+                            ->label('Precios por Ciclo')
+                            ->keyLabel('Ciclo')
+                            ->valueLabel('Precio')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -70,14 +117,11 @@ class ServiceResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('Ver Detalles')
+                    ->modalWidth('lg'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getPages(): array

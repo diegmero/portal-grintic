@@ -17,12 +17,16 @@ class Service extends Model
         'type',
         'base_price',
         'description',
+        'features',
+        'pricing',
         'is_active',
     ];
 
     protected $casts = [
         'type' => ServiceType::class,
         'base_price' => 'decimal:2',
+        'features' => 'array',
+        'pricing' => 'collection',
         'is_active' => 'boolean',
     ];
 
