@@ -34,6 +34,28 @@ class InvoiceResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Section::make('Contexto del Servicio')
+                    ->schema([
+                        Forms\Components\Placeholder::make('service_type_header')
+                            ->label('Tipo de Servicio')
+                            ->content(function ($record) {
+                                if (!$record) return '-';
+                                $items = $record->invoiceItems;
+                                if ($items->isEmpty()) return 'Sin items';
+                                
+                                return $items->pluck('itemable_type')->unique()->map(function ($type) {
+                                    return match($type) {
+                                        'App\Models\Project' => 'Proyecto',
+                                        'App\Models\SubscriptionPeriod' => 'Suscripción',
+                                        'App\Models\WorkLog' => 'Soporte - Horas',
+                                        default => 'Otro',
+                                    };
+                                })->join(', ');
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible(),
+                
                 Forms\Components\Section::make('Información General')
                     ->schema([
                         Forms\Components\TextInput::make('invoice_number')
@@ -74,6 +96,7 @@ class InvoiceResource extends Resource
                             ->label('Fecha de Vencimiento')
                             ->required()
                             ->minDate(fn (Forms\Get $get) => $get('issue_date')),
+
                     ])
                     ->columns(2),
                 
@@ -150,7 +173,7 @@ class InvoiceResource extends Resource
                             return match($type) {
                                 'App\Models\Project' => 'Proyecto',
                                 'App\Models\SubscriptionPeriod' => 'Suscripción',
-                                'App\Models\WorkLog' => 'Trabajo',
+                                'App\Models\WorkLog' => 'Soporte - Horas',
                                 default => 'Otro',
                             };
                         });
@@ -291,53 +314,69 @@ class InvoiceResource extends Resource
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Información General')
+                Infolists\Components\Grid::make(3)
                     ->schema([
-                        Infolists\Components\TextEntry::make('invoice_number')
-                            ->label('Número de Factura')
-                            ->copyable(),
-                        Infolists\Components\TextEntry::make('client.company_name')
-                            ->label('Cliente'),
-                        Infolists\Components\TextEntry::make('status')
-                            ->label('Estado')
-                            ->badge(),
-                        Infolists\Components\TextEntry::make('issue_date')
-                            ->label('Fecha de Emisión')
-                            ->date('d/m/Y'),
-                        Infolists\Components\TextEntry::make('due_date')
-                            ->label('Fecha de Vencimiento')
-                            ->date('d/m/Y'),
-                    ])
-                    ->columns(1),
-                
-                Infolists\Components\Section::make('Detalles Económicos')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('subtotal')
-                            ->label('Subtotal')
-                            ->money('USD'),
-                        Infolists\Components\TextEntry::make('tax_amount')
-                            ->label('Impuestos')
-                            ->money('USD'),
-                        Infolists\Components\TextEntry::make('total')
-                            ->label('Total')
-                            ->money('USD')
-                            ->weight('bold')
-                            ->size('lg'),
-                        Infolists\Components\TextEntry::make('payments_sum_amount')
-                            ->label('Pagado')
-                            ->state(fn ($record) => $record->payments()->sum('amount'))
-                            ->money('USD')
-                            ->color('success'),
-                    ])
-                    ->columns(1),
-                
-                Infolists\Components\Section::make('Notas')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('notes')
-                            ->label('Notas')
-                            ->visible(fn ($record) => $record->notes),
-                    ])
-                    ->columns(1),
+                        Infolists\Components\Section::make('Resumen de Factura')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('invoice_number')
+                                    ->label('Número de Factura')
+                                    ->copyable(),
+                                Infolists\Components\TextEntry::make('client.company_name')
+                                    ->label('Cliente'),
+                                Infolists\Components\TextEntry::make('service_type')
+                                    ->label('Tipo de Servicio')
+                                    ->state(function ($record) {
+                                        $items = $record->invoiceItems;
+                                        if ($items->isEmpty()) return 'Sin items';
+                                        
+                                        return $items->pluck('itemable_type')->unique()->map(function ($type) {
+                                            return match($type) {
+                                                'App\Models\Project' => 'Proyecto',
+                                                'App\Models\SubscriptionPeriod' => 'Suscripción',
+                                                'App\Models\WorkLog' => 'Soporte - Horas',
+                                                default => 'Otro',
+                                            };
+                                        })->join(', ');
+                                    })
+                                    ->badge()
+                                    ->color('info'),
+                            ])
+                            ->columnSpan(1),
+                        
+                        Infolists\Components\Section::make('Totales')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('payments_sum_amount')
+                                    ->label('Total Pagado')
+                                    ->state(fn ($record) => $record->payments()->sum('amount'))
+                                    ->money('USD')
+                                    ->color('success'),
+                                Infolists\Components\TextEntry::make('pending_amount')
+                                    ->label('Pendiente')
+                                    ->state(fn ($record) => $record->total - $record->payments()->sum('amount'))
+                                    ->money('USD')
+                                    ->color('danger'),
+                                Infolists\Components\TextEntry::make('status')
+                                    ->label('Estado')
+                                    ->badge(),
+                            ])
+                            ->columnSpan(1),
+
+                        Infolists\Components\Section::make('Fechas')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('issue_date')
+                                    ->label('Fecha de Emisión')
+                                    ->date('d/m/Y'),
+                                Infolists\Components\TextEntry::make('created_at')
+                                    ->label('Hora de Emisión')
+                                    ->dateTime('h:i A')
+                                    ->timezone('America/Bogota'),
+                                Infolists\Components\TextEntry::make('due_date')
+                                    ->label('Fecha de Vencimiento')
+                                    ->date('d/m/Y')
+                                    ->color(fn ($record) => $record->due_date < now() && $record->status !== \App\Enums\InvoiceStatus::PAID ? 'danger' : null),
+                            ])
+                            ->columnSpan(1),
+                    ]),
             ]);
     }
 
@@ -346,14 +385,20 @@ class InvoiceResource extends Resource
         return [
             RelationManagers\InvoiceItemsRelationManager::class,
             RelationManagers\PaymentsRelationManager::class,
+            RelationManagers\NotesRelationManager::class,
         ];
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
     }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListInvoices::route('/'),
-            'create' => Pages\CreateInvoice::route('/create'),
+            // 'create' => Pages\CreateInvoice::route('/create'),
             'edit' => Pages\EditInvoice::route('/{record}/edit'),
             'view' => Pages\ViewInvoice::route('/{record}'),
         ];

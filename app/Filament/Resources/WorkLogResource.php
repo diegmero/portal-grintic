@@ -342,7 +342,8 @@ class WorkLogResource extends Resource
                                 Infolists\Components\TextEntry::make('invoiceItem.invoice.invoice_number')
                                     ->label('Nº Factura')
                                     ->icon('heroicon-o-document-text')
-                                    ->color('primary')
+                                    ->color('info')
+                                    ->weight('bold')
                                     ->url(fn ($record) => $record->invoiceItem?->invoice ? route('filament.admin.resources.invoices.view', ['record' => $record->invoiceItem->invoice]) : null),
                                 
                                 Infolists\Components\TextEntry::make('invoiceItem.invoice.status')

@@ -113,6 +113,7 @@ class PaymentsRelationManager extends RelationManager
                             ->modalWidth('5xl')
                     ),
             ])
+            ->recordUrl(fn ($record) => \App\Filament\Resources\PaymentResource::getUrl('edit', ['record' => $record]))
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Nuevo Pago')

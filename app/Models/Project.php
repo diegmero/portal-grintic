@@ -69,6 +69,11 @@ class Project extends Model
     {
         return $this->hasMany(ProjectDocumentation::class)->latest();
     }
+    
+    public function workLogs(): HasMany
+    {
+        return $this->hasMany(WorkLog::class)->latest();
+    }
 
     /**
      * Get invoices through invoice items (polymorphic)

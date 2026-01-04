@@ -66,6 +66,8 @@ class ViewWorkLog extends ViewRecord
                                 Components\TextEntry::make('invoiceItem.invoice.invoice_number')
                                     ->label('Factura')
                                     ->placeholder('Sin facturar')
+                                    ->color('info')
+                                    ->weight('bold')
                                     ->url(fn ($record) => $record->invoiceItem?->invoice 
                                         ? route('filament.admin.resources.invoices.view', ['record' => $record->invoiceItem->invoice]) 
                                         : null),

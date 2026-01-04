@@ -58,6 +58,27 @@ class PaymentResource extends Resource
                             ->required()
                             ->maxDate(now())
                             ->disabled(),
+                            
+                        Forms\Components\Placeholder::make('client_name')
+                            ->label('Cliente')
+                            ->content(fn ($record) => $record?->invoice?->client?->company_name ?? '-'),
+                            
+                        Forms\Components\Placeholder::make('context')
+                            ->label('Concepto / Servicio')
+                            ->content(function ($record) {
+                                if (!$record || !$record->invoice) return '-';
+                                $items = $record->invoice->invoiceItems;
+                                if ($items->isEmpty()) return '-';
+                                
+                                return $items->pluck('itemable_type')->unique()->map(function ($type) {
+                                    return match($type) {
+                                        'App\Models\Project' => 'Proyecto',
+                                        'App\Models\SubscriptionPeriod' => 'Suscripción',
+                                        'App\Models\WorkLog' => 'Soporte - Horas',
+                                        default => 'Otro',
+                                    };
+                                })->join(', ');
+                            }),
                         
                         Forms\Components\Select::make('payment_method')
                             ->label('Método de Pago')

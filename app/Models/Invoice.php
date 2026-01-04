@@ -85,6 +85,11 @@ class Invoice extends Model
     }
 
     // Relaciones
+    public function details(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(self::class, 'id', 'id');
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);

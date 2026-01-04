@@ -8,7 +8,8 @@ Route::get('/', function () {
 });
 
 // Rutas protegidas para archivos
-Route::middleware(['auth'])->group(function () {
+// Rutas protegidas para archivos (Admins y Clientes)
+Route::middleware(['auth:web,client'])->group(function () {
     Route::get('/files/payments/{filename}', [FileController::class, 'viewPaymentAttachment'])
         ->name('files.payments.view');
     Route::get('/files/payments/{filename}/download', [FileController::class, 'downloadPaymentAttachment'])

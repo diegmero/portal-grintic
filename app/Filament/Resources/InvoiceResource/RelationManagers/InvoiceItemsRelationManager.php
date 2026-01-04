@@ -85,6 +85,16 @@ class InvoiceItemsRelationManager extends RelationManager
                     ->label('Subtotal')
                     ->money('USD'),
             ])
+            ->recordUrl(function ($record) {
+                if (!$record->itemable) return null;
+                
+                return match($record->itemable_type) {
+                    'App\Models\Project' => \App\Filament\Resources\ProjectResource::getUrl('view', ['record' => $record->itemable]),
+                    'App\Models\WorkLog' => \App\Filament\Resources\WorkLogResource::getUrl('view', ['record' => $record->itemable]),
+                    'App\Models\SubscriptionPeriod' => \App\Filament\Resources\SubscriptionResource::getUrl('view', ['record' => $record->itemable->subscription]), 
+                    default => null,
+                };
+            })
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Nuevo Item')

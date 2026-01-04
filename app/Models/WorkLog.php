@@ -15,6 +15,7 @@ class WorkLog extends Model
 
     protected $fillable = [
         'client_id',
+        'project_id',
         'service_id',
         'hours',
         'hourly_rate',
@@ -34,15 +35,7 @@ class WorkLog extends Model
     {
         static::deleting(function (WorkLog $workLog) {
             if ($workLog->status !== WorkLogStatus::PENDING) {
-                // Si es soft delete, permitimos "archivar" si es necesario? 
-                // El usuario pidió "evitar que esto pueda pasar", asumo bloqueo total.
-                // Si se usa ForceDelete, definitivamente bloquear.
-                
-                // Pero wait, Filament usa SoftDeletes por defecto si el modelo lo tiene.
-                // SoftDeleting un registro facturado también es malo porque desaparece de la UI.
-                
-                if (! $workLog->isForceDeleting()) {
-                    // Es un soft delete. Bloquear también para evitar inconsistencias visuales.
+                 if (! $workLog->isForceDeleting()) {
                      \Filament\Notifications\Notification::make()
                         ->danger()
                         ->title('Operación Bloqueada')
@@ -59,6 +52,11 @@ class WorkLog extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     public function service(): BelongsTo

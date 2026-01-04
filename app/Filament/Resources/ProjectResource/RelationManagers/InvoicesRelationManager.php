@@ -25,7 +25,10 @@ class InvoicesRelationManager extends RelationManager
             ->emptyStateDescription('Este proyecto no tiene facturas asociadas.')
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')
-                    ->label('Número'),
+                    ->label('Número')
+                    ->color('info')
+                    ->weight('bold')
+                    ->url(fn ($record) => \App\Filament\Resources\InvoiceResource::getUrl('view', ['record' => $record])),
                 
                 Tables\Columns\TextColumn::make('issue_date')
                     ->label('Fecha')
