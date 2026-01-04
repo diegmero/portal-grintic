@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
+use Filament\Support\Colors\Color;
 
 class RevenueChart extends ChartWidget
 {
@@ -26,8 +27,12 @@ class RevenueChart extends ChartWidget
                 [
                     'label' => 'Facturación',
                     'data' => $data->map(fn (\Flowframe\Trend\TrendValue $value) => $value->aggregate),
-                    'borderColor' => '#F59E0B', // Amber-500
-                    'backgroundColor' => '#FEF3C7', // Amber-100
+                    'borderColor' => 'rgb(' . Color::Green[500] . ')',
+                    'backgroundColor' => 'rgba(' . Color::Green[500] . ', 0.1)',
+                    'pointBackgroundColor' => 'rgb(' . Color::Green[500] . ')',
+                    'pointBorderColor' => 'rgb(' . Color::Green[500] . ')',
+                    'pointHoverBackgroundColor' => 'rgb(' . Color::Green[500] . ')',
+                    'pointHoverBorderColor' => 'rgb(' . Color::Green[500] . ')',
                     'fill' => true,
                     'tension' => 0.4,
                 ],

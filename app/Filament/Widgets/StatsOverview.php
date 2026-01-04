@@ -65,12 +65,12 @@ class StatsOverview extends BaseWidget
             Stat::make('Facturas por Cobrar', $unpaidInvoicesCount)
                 ->description('Documentos pendientes')
                 ->descriptionIcon('heroicon-m-document-currency-dollar')
-                ->color('warning'),
+                ->color('info'),
 
             Stat::make('Suscripciones Activas', $activeSubscriptions)
                 ->description('Ingresos recurrentes')
                 ->descriptionIcon('heroicon-m-arrow-path')
-                ->color('success'),
+                ->color('info'),
 
             Stat::make('Proyectos en Curso', $activeProjects)
                 ->description('Trabajos activos')
@@ -81,22 +81,22 @@ class StatsOverview extends BaseWidget
             Stat::make('Horas Soporte (Mes)', $hoursThisMonth . ' hrs')
                 ->description('Tiempo registrado')
                 ->descriptionIcon('heroicon-m-clock')
-                ->color('primary'),
+                ->color('info'),
 
             Stat::make('Total Clientes', $totalClients)
                 ->description('Cartera activa')
                 ->descriptionIcon('heroicon-m-users')
-                ->color('gray'),
+                ->color('info'),
 
             Stat::make('Ticket Promedio', '$' . number_format($averageTicket, 2))
                 ->description('Valor medio por factura')
                 ->descriptionIcon('heroicon-m-calculator')
-                ->color('success'),
+                ->color('info'),
 
             Stat::make('Proyectos Completados', $completedProjects)
                 ->description('Histórico finalizado')
                 ->descriptionIcon('heroicon-m-check-badge')
-                ->color('success'),
+                ->color('info'),
         ];
     }
 
