@@ -22,6 +22,8 @@ class SubscriptionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
     protected static ?string $navigationGroup = 'Gestión';
+    protected static ?string $modelLabel = 'Suscripción';
+    protected static ?string $pluralModelLabel = 'Suscripciones';
 
     public static function form(Form $form): Form
     {

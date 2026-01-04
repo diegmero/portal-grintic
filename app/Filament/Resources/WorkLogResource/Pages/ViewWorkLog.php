@@ -71,10 +71,6 @@ class ViewWorkLog extends ViewRecord
                                     ->url(fn ($record) => $record->invoiceItem?->invoice 
                                         ? route('filament.admin.resources.invoices.view', ['record' => $record->invoiceItem->invoice]) 
                                         : null),
-                                Components\TextEntry::make('invoiceItem.invoice.status')
-                                    ->label('Estado Factura')
-                                    ->badge()
-                                    ->visible(fn ($record) => $record->invoiceItem !== null),
                                 Components\TextEntry::make('attachment_path')
                                     ->label('Adjuntos')
                                     ->formatStateUsing(fn ($state, $record) => view('filament.components.modal-file-viewer', [

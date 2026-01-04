@@ -2,13 +2,15 @@
 
 namespace App\Enums;
 
-enum ClientStatus: string
+use Filament\Support\Contracts\HasLabel;
+
+enum ClientStatus: string implements HasLabel
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
     case BLACKLISTED = 'blacklisted';
 
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match($this) {
             self::ACTIVE => 'Activo',

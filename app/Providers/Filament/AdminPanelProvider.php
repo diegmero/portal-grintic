@@ -42,6 +42,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Widgets\LatestInvoices::class,
             ])
             ->middleware([
+                \App\Http\Middleware\SetLocale::class,
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,

@@ -394,10 +394,6 @@ class WorkLogResource extends Resource
                                     ->weight('bold')
                                     ->url(fn ($record) => $record->invoiceItem?->invoice ? route('filament.admin.resources.invoices.view', ['record' => $record->invoiceItem->invoice]) : null),
                                 
-                                Infolists\Components\TextEntry::make('invoiceItem.invoice.status')
-                                    ->label('Estado')
-                                    ->badge(),
-                                
                                 Infolists\Components\TextEntry::make('invoiceItem.invoice.total')
                                     ->label('Monto')
                                     ->money('USD'),

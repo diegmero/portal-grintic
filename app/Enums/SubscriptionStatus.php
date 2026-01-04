@@ -2,13 +2,15 @@
 
 namespace App\Enums;
 
-enum SubscriptionStatus: string
+use Filament\Support\Contracts\HasLabel;
+
+enum SubscriptionStatus: string implements HasLabel
 {
     case ACTIVE = 'active';
     case PAUSED = 'paused';
     case CANCELLED = 'cancelled';
 
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match($this) {
             self::ACTIVE => 'Activa',

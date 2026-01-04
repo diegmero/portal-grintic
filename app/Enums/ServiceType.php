@@ -2,12 +2,14 @@
 
 namespace App\Enums;
 
-enum ServiceType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum ServiceType: string implements HasLabel
 {
     case RECURRING = 'recurring';
     case HOURLY = 'hourly';
 
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match($this) {
             self::RECURRING => 'Servicio Recurrente',

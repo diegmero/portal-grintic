@@ -2,13 +2,15 @@
 
 namespace App\Enums;
 
-enum BillingCycle: string
+use Filament\Support\Contracts\HasLabel;
+
+enum BillingCycle: string implements HasLabel
 {
     case MONTHLY = 'monthly';
     case QUARTERLY = 'quarterly';
     case YEARLY = 'yearly';
 
-    public function label(): string
+    public function getLabel(): ?string
     {
         return match($this) {
             self::MONTHLY => 'Mensual',
