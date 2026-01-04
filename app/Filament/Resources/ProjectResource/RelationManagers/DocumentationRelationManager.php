@@ -53,7 +53,7 @@ class DocumentationRelationManager extends RelationManager
                     ->maxFiles(3)
                     ->acceptedFileTypes(['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'])
                     ->directory('project-documentation')
-                    ->visibility('public')
+                    ->visibility('private')
                     ->downloadable()
                     ->previewable()
                     ->helperText('Máximo 3 archivos. Formatos: PDF, PNG, JPG, JPEG. Tamaño máximo recomendado: 10MB por archivo')

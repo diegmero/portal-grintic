@@ -13,4 +13,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('files.payments.view');
     Route::get('/files/payments/{filename}/download', [FileController::class, 'downloadPaymentAttachment'])
         ->name('files.payments.download');
+    
+    Route::get('/files/projects/documentation/{filename}', [FileController::class, 'viewProjectDocumentation'])
+        ->name('files.projects.documentation.view');
 });

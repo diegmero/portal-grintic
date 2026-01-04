@@ -5,7 +5,7 @@
                 @php
                     $extension = pathinfo($attachment, PATHINFO_EXTENSION);
                     $isPdf = strtolower($extension) === 'pdf';
-                    $url = \Storage::url($attachment);
+                    $url = route('files.projects.documentation.view', ['filename' => basename($attachment)]);
                     $filename = basename($attachment);
                 @endphp
                 
