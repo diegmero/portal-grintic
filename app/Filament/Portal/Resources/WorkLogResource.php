@@ -23,6 +23,7 @@ class WorkLogResource extends Resource
     protected static ?string $modelLabel = 'Horas Soporte';
     protected static ?string $pluralModelLabel = 'Horas Soporte';
     protected static ?string $navigationGroup = 'Soporte';
+    protected static ?string $navigationIcon = 'heroicon-o-lifebuoy';
 
     public static function infolist(Infolist $infolist): Infolist
     {

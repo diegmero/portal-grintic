@@ -29,7 +29,6 @@ class EditProfile extends BaseEditProfile
                     ->rule(Password::default())
                     ->autocomplete('new-password')
                     ->dehydrated(fn ($state): bool => filled($state))
-                    ->dehydrateStateUsing(fn ($state): string => Hash::make($state))
                     ->live(debounce: 500)
                     ->same('passwordConfirmation'),
 

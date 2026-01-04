@@ -19,23 +19,31 @@ class ServiceResource extends Resource
     protected static ?string $model = Service::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $modelLabel = 'Servicio';
+    protected static ?string $pluralModelLabel = 'Servicios';
+    protected static ?string $navigationLabel = 'Catálogo de Servicios';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre del Servicio')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('type')
+                    ->label('Tipo')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('base_price')
+                    ->label('Precio Base')
                     ->required()
                     ->numeric(),
                 Forms\Components\Textarea::make('description')
+                    ->label('Descripción')
                     ->columnSpanFull(),
                 Forms\Components\Toggle::make('is_active')
+                    ->label('Activo')
                     ->required(),
             ]);
     }
@@ -45,26 +53,18 @@ class ServiceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->label('Servicio')
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('type')
-                    ->searchable(),
+                    ->label('Tipo')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('base_price')
-                    ->numeric()
+                    ->label('Precio Base')
+                    ->money('USD')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
+                    ->label('Disponible')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

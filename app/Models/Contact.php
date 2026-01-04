@@ -40,17 +40,12 @@ class Contact extends Authenticatable implements FilamentUser, HasName
 
     protected $casts = [
         'is_primary' => 'boolean',
+        'password' => 'hashed',
     ];
 
     // Relaciones
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
-    }
-
-    // Mutator para encriptar password
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['password'] = Hash::make($value);
     }
 }
