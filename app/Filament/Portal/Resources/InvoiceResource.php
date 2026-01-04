@@ -72,10 +72,23 @@ class InvoiceResource extends Resource
                         TextEntry::make('issue_date')->date()->label('Fecha Emisión'),
                         TextEntry::make('due_date')->date()->label('Fecha Vencimiento'),
                         TextEntry::make('status')->badge()->label('Estado'),
-                        TextEntry::make('subtotal')->money('USD')->label('Subtotal'),
-                        TextEntry::make('tax_amount')->money('USD')->label('Impuestos'),
                         TextEntry::make('total')->money('USD')->label('Total'),
+                        TextEntry::make('pending')
+                            ->label('Pendiente')
+                            ->money('USD')
+                            ->state(fn ($record) => $record->total - $record->payments()->sum('amount'))
+                            ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
                     ])->columns(3),
+                
+                Section::make('Notas')
+                    ->schema([
+                        TextEntry::make('notes')
+                            ->hiddenLabel()
+                            ->prose()
+                            ->placeholder('Sin notas'),
+                    ])
+                    ->visible(fn ($record) => !empty($record->notes))
+                    ->collapsible(),
             ]);
     }
 

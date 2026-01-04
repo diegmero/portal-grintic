@@ -116,18 +116,18 @@ class Invoice extends Model
         // Verificar estados automáticos basado en pagos
         $paid = $this->payments()->sum('amount');
         
-        // Si no está cancelada/borrador y hay pagos parciales
-        // Si no está cancelada/borrador y hay pagos parciales
+        // Si no está cancelada/borrador, recalcular estado basado en pagos
         if (!in_array($this->status, [\App\Enums\InvoiceStatus::DRAFT, \App\Enums\InvoiceStatus::CANCELLED])) {
-            $diff = round($this->total - $paid, 2);
-            
-            if ($diff <= 0 && $this->total > 0) {
-                $this->status = \App\Enums\InvoiceStatus::PAID;
-            } elseif ($paid > 0 && $diff > 0) {
-                $this->status = \App\Enums\InvoiceStatus::PARTIALLY_PAID;
-            } elseif ($paid == 0 && $this->status === \App\Enums\InvoiceStatus::PAID) {
-                // Si estaba pagada pero borraron pagos y quedó en 0
-                $this->status = \App\Enums\InvoiceStatus::INVOICED;
+            $paid = $this->payments()->sum('amount');
+            $pending = round($this->total - $paid, 2);
+
+            if ($this->total > 0 && $pending <= 0) {
+                 $this->status = \App\Enums\InvoiceStatus::PAID;
+            } elseif ($paid > 0 && $pending > 0) {
+                 $this->status = \App\Enums\InvoiceStatus::PARTIALLY_PAID;
+            } else {
+                 // Si no hay pagos o queda saldo pendiente y no es parcial
+                 $this->status = \App\Enums\InvoiceStatus::INVOICED;
             }
         }
         

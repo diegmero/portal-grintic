@@ -46,5 +46,13 @@ class Payment extends Model
                 $invoice->save();
             }
         });
+        
+        static::deleted(function ($payment) {
+            // Recalcular estado de la factura cuando se elimina un pago
+            $invoice = $payment->invoice;
+            if ($invoice) {
+                $invoice->calculateTotals();
+            }
+        });
     }
 }

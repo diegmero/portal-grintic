@@ -31,7 +31,7 @@ class PaymentsRelationManager extends RelationManager
                     ->required()
                     ->prefix('$')
                     ->minValue(0.01)
-                    ->disabled()
+
                     ->maxValue(function ($record) {
                         $invoice = $this->getOwnerRecord();
                         $alreadyPaid = $invoice->payments()
@@ -45,26 +45,26 @@ class PaymentsRelationManager extends RelationManager
                     ->label('Fecha de Pago')
                     ->default(now())
                     ->required()
-                    ->maxDate(now())
-                    ->disabled(),
+                    ->maxDate(now()),
+
                 
                 Forms\Components\Select::make('payment_method')
                     ->label('Método de Pago')
                     ->options(PaymentMethod::class)
-                    ->required()
-                    ->disabled(),
+                    ->required(),
+
                 
                 Forms\Components\TextInput::make('transaction_reference')
                     ->label('Referencia/Nº Transacción')
-                    ->maxLength(255)
-                    ->disabled(),
+                    ->maxLength(255),
+
                 
                 Forms\Components\FileUpload::make('attachment_path')
                     ->label('Comprobante')
                     ->directory('payments')
                     ->visibility('private')
-                    ->acceptedFileTypes(['image/*', 'application/pdf'])
-                    ->disabled(),
+                    ->acceptedFileTypes(['image/*', 'application/pdf']),
+
                 
                 Forms\Components\Textarea::make('notes')
                     ->label('Notas')
@@ -138,6 +138,12 @@ class PaymentsRelationManager extends RelationManager
                 Tables\Actions\EditAction::make()
                     ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
+                        $this->getOwnerRecord()->calculateTotals();
+                        $this->dispatch('$refresh');
+                    }),
+                Tables\Actions\DeleteAction::make()
+                    ->after(function () {
+                        // Recalcular estado de la factura cuando se elimina un pago
                         $this->getOwnerRecord()->calculateTotals();
                         $this->dispatch('$refresh');
                     }),

@@ -207,7 +207,25 @@ class ProjectResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function ($records, $action) {
+                            $protectedProjects = $records->filter(function ($record) {
+                                return $record->invoiceItems()->exists() || $record->workLogs()->exists();
+                            });
+                            
+                            if ($protectedProjects->isNotEmpty()) {
+                                $names = $protectedProjects->pluck('name')->join(', ');
+                                
+                                \Filament\Notifications\Notification::make()
+                                    ->danger()
+                                    ->title('Operación Bloqueada')
+                                    ->body("Los siguientes proyectos tienen historial financiero y no pueden ser eliminados: {$names}")
+                                    ->persistent()
+                                    ->send();
+                                
+                                $action->halt();
+                            }
+                        }),
                 ]),
             ])
             ->defaultSort('started_at', 'desc');

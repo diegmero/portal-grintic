@@ -96,7 +96,10 @@ class DocumentationRelationManager extends RelationManager
             ])
             ->headerActions([])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->modalHeading(fn ($record) => $record->title)
+                    ->modalContent(fn ($record) => view('filament.components.documentation-view-portal', ['record' => $record]))
+                    ->form([]),
             ])
             ->bulkActions([]);
     }

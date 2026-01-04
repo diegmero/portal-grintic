@@ -35,38 +35,79 @@ class ProjectResource extends Resource
     {
         return $infolist
             ->schema([
-                Tabs::make('Project Details')
-                    ->tabs([
-                        Tabs\Tab::make('Resumen')
+                // Sección Unificada - Dashboard Card
+                \Filament\Infolists\Components\Section::make()
+                    ->schema([
+                        // Fila 1: Header con Título y Estado
+                        \Filament\Infolists\Components\Grid::make(2)
                             ->schema([
-                                Section::make('Información General')
-                                    ->schema([
-                                        TextEntry::make('name')->label('Nombre'),
-                                        TextEntry::make('status')
-                                            ->badge()
-                                            ->label('Estado'),
-                                        TextEntry::make('total_budget')
-                                            ->money('USD')
-                                            ->label('Presupuesto'),
-                                        TextEntry::make('deadline')
-                                            ->date()
-                                            ->label('Fecha Límite'),
-                                        TextEntry::make('started_at')
-                                            ->date()
-                                            ->label('Inicio'),
-                                        TextEntry::make('completed_at')
-                                            ->date()
-                                            ->label('Fin'),
-                                    ])->columns(2),
-                                Section::make('Descripción')
-                                    ->schema([
-                                        TextEntry::make('description')->columnSpanFull(),
-                                        TextEntry::make('technologies')
-                                            ->badge()
-                                            ->columnSpanFull(),
-                                    ]),
+                                \Filament\Infolists\Components\TextEntry::make('name')
+                                    ->hiddenLabel()
+                                    ->size('lg')
+                                    ->weight('bold')
+                                    ->icon('heroicon-o-folder'),
+                                \Filament\Infolists\Components\TextEntry::make('status')
+                                    ->hiddenLabel()
+                                    ->badge()
+                                    ->alignEnd(),
                             ]),
-                    ])->columnSpanFull(),
+                        
+                        // Separador visual
+                        \Filament\Infolists\Components\TextEntry::make('divider')
+                            ->hiddenLabel()
+                            ->state('')
+                            ->extraAttributes(['class' => 'border-b border-gray-200 dark:border-gray-700 my-3']),
+                        
+                        // Fila 2: Stats Horizontales (4 métricas en línea)
+                        \Filament\Infolists\Components\Grid::make(4)
+                            ->schema([
+                                \Filament\Infolists\Components\Group::make([
+                                    \Filament\Infolists\Components\TextEntry::make('total_budget')
+                                        ->label('Presupuesto')
+                                        ->money('USD')
+                                        ->size('lg')
+                                        ->weight('bold')
+                                        ->color('success')
+                                        ->icon('heroicon-o-banknotes'),
+                                ]),
+                                \Filament\Infolists\Components\Group::make([
+                                    \Filament\Infolists\Components\TextEntry::make('deadline')
+                                        ->label('Entrega')
+                                        ->date('d M, Y')
+                                        ->color(fn ($record) => $record->deadline && $record->deadline->isPast() ? 'danger' : 'primary')
+                                        ->icon('heroicon-o-flag'),
+                                ]),
+                                \Filament\Infolists\Components\Group::make([
+                                    \Filament\Infolists\Components\TextEntry::make('started_at')
+                                        ->label('Inicio')
+                                        ->date('d/m/Y')
+                                        ->placeholder('Sin definir')
+                                        ->icon('heroicon-o-play'),
+                                ]),
+                                \Filament\Infolists\Components\Group::make([
+                                    \Filament\Infolists\Components\TextEntry::make('completed_at')
+                                        ->label('Finalización')
+                                        ->date('d/m/Y')
+                                        ->placeholder('En curso')
+                                        ->icon('heroicon-o-check-circle')
+                                        ->color(fn ($state) => $state ? 'success' : 'gray'),
+                                ]),
+                            ]),
+                        
+                        // Separador visual
+                        \Filament\Infolists\Components\TextEntry::make('divider2')
+                            ->hiddenLabel()
+                            ->state('')
+                            ->extraAttributes(['class' => 'border-b border-gray-200 dark:border-gray-700 my-3']),
+                        
+                        // Fila 3: Descripción completa
+                        \Filament\Infolists\Components\TextEntry::make('description')
+                            ->label('Descripción del Proyecto')
+                            ->prose()
+                            ->markdown()
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 

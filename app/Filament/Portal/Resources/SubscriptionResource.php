@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Infolists\Infolist;
+use Filament\Infolists;
 
 class SubscriptionResource extends Resource
 {
@@ -47,6 +49,35 @@ class SubscriptionResource extends Resource
             ]);
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Información de Suscripción')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('service.name')
+                            ->label('Servicio'),
+                        Infolists\Components\TextEntry::make('billing_cycle')
+                            ->label('Ciclo de Facturación')
+                            ->badge(),
+                        Infolists\Components\TextEntry::make('effective_price')
+                            ->label('Precio')
+                            ->money('USD'),
+                        Infolists\Components\TextEntry::make('status')
+                            ->label('Estado')
+                            ->badge(),
+                        Infolists\Components\TextEntry::make('started_at')
+                            ->label('Fecha de Inicio')
+                            ->date('d/m/Y'),
+                        Infolists\Components\TextEntry::make('cancelled_at')
+                            ->label('Fecha de Cancelación')
+                            ->date('d/m/Y')
+                            ->visible(fn ($record) => $record->cancelled_at),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -74,6 +105,13 @@ class SubscriptionResource extends Resource
             ->bulkActions([]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\PeriodsRelationManager::class,
+        ];
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('client_id', auth()->user()->client_id);
@@ -97,7 +135,8 @@ class SubscriptionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageSubscriptions::route('/'),
+            'index' => Pages\ListSubscriptions::route('/'),
+            'view' => Pages\ViewSubscription::route('/{record}'),
         ];
     }
 }

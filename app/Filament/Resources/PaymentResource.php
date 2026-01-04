@@ -135,10 +135,24 @@ class PaymentResource extends Resource
                     ->badge()
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('transaction_reference')
-                    ->label('Referencia')
-                    ->limit(20)
-                    ->toggleable(),
+                Tables\Columns\TextColumn::make('service_type')
+                    ->label('Tipo de Servicio')
+                    ->state(function ($record) {
+                        if (!$record->invoice) return '-';
+                        $items = $record->invoice->invoiceItems;
+                        if ($items->isEmpty()) return '-';
+                        
+                        return $items->pluck('itemable_type')->unique()->map(function ($type) {
+                            return match($type) {
+                                'App\Models\Project' => 'Proyecto',
+                                'App\Models\SubscriptionPeriod' => 'Suscripción',
+                                'App\Models\WorkLog' => 'Soporte - Horas',
+                                default => 'Otro',
+                            };
+                        })->join(', ');
+                    })
+                    ->badge()
+                    ->color('info'),
                 
                 Tables\Columns\TextColumn::make('attachment_path')
                     ->label('Comprobante')

@@ -39,6 +39,18 @@ class Project extends Model
         'infrastructure' => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Project $project) {
+            if ($project->invoiceItems()->exists() || $project->workLogs()->exists()) {
+                if (! $project->isForceDeleting()) {
+                    // Block deletion silently - UI handles notification
+                    return false;
+                }
+            }
+        });
+    }
+
     // Relaciones
     public function client(): BelongsTo
     {

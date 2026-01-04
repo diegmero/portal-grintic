@@ -304,7 +304,25 @@ class InvoiceResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function ($records, $action) {
+                            $invoicesWithPayments = $records->filter(function ($record) {
+                                return $record->payments()->exists();
+                            });
+                            
+                            if ($invoicesWithPayments->isNotEmpty()) {
+                                $numbers = $invoicesWithPayments->pluck('invoice_number')->join(', ');
+                                
+                                \Filament\Notifications\Notification::make()
+                                    ->danger()
+                                    ->title('Operación Bloqueada')
+                                    ->body("Las siguientes facturas tienen pagos registrados y no pueden ser eliminadas: {$numbers}")
+                                    ->persistent()
+                                    ->send();
+                                
+                                $action->halt();
+                            }
+                        }),
                 ]),
             ])
             ->defaultSort('issue_date', 'desc');

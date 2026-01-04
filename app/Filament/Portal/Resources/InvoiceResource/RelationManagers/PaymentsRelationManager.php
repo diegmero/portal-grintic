@@ -40,10 +40,6 @@ class PaymentsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('payment_method')
                     ->label('Método')
                     ->badge(),
-                Tables\Columns\TextColumn::make('transaction_reference')
-                    ->label('Ref.')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('attachment_path')
                     ->label('Comprobante')
                     ->formatStateUsing(fn ($state) => $state ? '📎 Ver' : '-')

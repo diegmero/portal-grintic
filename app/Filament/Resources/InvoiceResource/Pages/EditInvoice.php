@@ -41,7 +41,19 @@ class EditInvoice extends EditRecord
         return [
             Actions\ViewAction::make(),
             Actions\DeleteAction::make()
-                ->visible(fn ($record) => !$record->hasLinkedPeriods()),
+                ->visible(fn ($record) => !$record->hasLinkedPeriods())
+                ->before(function () {
+                    if ($this->record->payments()->exists()) {
+                        \Filament\Notifications\Notification::make()
+                            ->danger()
+                            ->title('Operación Bloqueada')
+                            ->body('No se puede eliminar una factura que tiene pagos registrados.')
+                            ->persistent()
+                            ->send();
+                        
+                        $this->halt();
+                    }
+                }),
         ];
     }
 
