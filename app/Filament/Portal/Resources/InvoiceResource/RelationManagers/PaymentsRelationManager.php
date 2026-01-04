@@ -18,9 +18,27 @@ class PaymentsRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('amount')
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\DatePicker::make('payment_date')
+                            ->label('Fecha')
+                            ->required(),
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Monto')
+                            ->numeric()
+                            ->prefix('$')
+                            ->required(),
+                        Forms\Components\TextInput::make('payment_method')
+                            ->label('Método de Pago')
+                            ->formatStateUsing(fn ($state) => \App\Enums\PaymentMethod::tryFrom($state)?->getLabel() ?? $state),
+                        Forms\Components\TextInput::make('transaction_reference')
+                            ->label('Referencia / Transacción'),
+                    ]),
+                Forms\Components\Textarea::make('notes')
+                    ->label('Notas')
+                    ->rows(3)
+                    ->columnSpanFull()
+                    ->placeholder('Sin notas'),
             ]);
     }
 
@@ -40,6 +58,10 @@ class PaymentsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('payment_method')
                     ->label('Método')
                     ->badge(),
+                Tables\Columns\TextColumn::make('transaction_reference')
+                    ->label('Referencia')
+                    ->limit(20)
+                    ->tooltip(fn ($state) => $state),
                 Tables\Columns\TextColumn::make('attachment_path')
                     ->label('Comprobante')
                     ->formatStateUsing(fn ($state) => $state ? '📎 Ver' : '-')
@@ -62,7 +84,8 @@ class PaymentsRelationManager extends RelationManager
             ])
             ->headerActions([])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->modalHeading('Datos del Pago'),
             ])
             ->bulkActions([]);
     }

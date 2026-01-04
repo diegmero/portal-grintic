@@ -21,6 +21,7 @@ class SubscriptionPeriod extends Model
         'status',
         'work_description',
         'internal_notes',
+        'attachments',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class SubscriptionPeriod extends Model
         'period_start' => 'date',
         'period_end' => 'date',
         'amount' => 'decimal:2',
+        'attachments' => 'array',
     ];
 
     protected static function booted(): void

@@ -56,6 +56,18 @@ class PeriodsRelationManager extends RelationManager
                 
                 Forms\Components\Section::make('Descripción del Trabajo')
                     ->schema([
+                        Forms\Components\FileUpload::make('attachments')
+                            ->label('Informe / Adjuntos')
+                            ->directory('subscription-period-attachments')
+                            ->multiple()
+                            ->maxFiles(10)
+                            ->maxSize(10240)
+                            ->acceptedFileTypes(['application/pdf'])
+                            ->columnSpan('full')
+                            ->downloadable()
+                            ->openable()
+                            ->hint('Máximo 10 archivos PDF, 10MB c/u'),
+
                         Forms\Components\Textarea::make('work_description')
                             ->label('Descripción del Trabajo Realizado')
                             ->rows(4)
@@ -132,6 +144,26 @@ class PeriodsRelationManager extends RelationManager
                     ->sortable(),
                 
 
+                Tables\Columns\TextColumn::make('attachments')
+                    ->label('Adjuntos')
+                    ->formatStateUsing(function ($state, $record) {
+                        return !empty($record->attachments) ? '📎' : '';
+                    })
+                    ->badge(false)
+                    ->color('info')
+                    ->alignCenter()
+                    ->tooltip(fn ($record) => !empty($record->attachments) ? count($record->attachments) . ' archivo(s)' : null)
+                    ->action(
+                        Tables\Actions\Action::make('previewAttachments')
+                            ->visible(fn ($record) => !empty($record->attachments))
+                            ->modalHeading('Archivos Adjuntos')
+                            ->modalWidth('5xl')
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn ($action) => $action->label('Cerrar'))
+                            ->modalContent(fn ($record) => view('filament.components.subscription-period-attachments-preview', [
+                                'attachments' => $record->attachments,
+                            ]))
+                    ),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
