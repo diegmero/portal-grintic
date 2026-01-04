@@ -106,6 +106,7 @@ class ViewClient extends ViewRecord
     {
         return [
             \App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager::class,
+            \App\Filament\Resources\ClientResource\RelationManagers\WorkLogsRelationManager::class,
             \App\Filament\Resources\ClientResource\RelationManagers\ClientNotesRelationManager::class,
             \App\Filament\Resources\ClientResource\RelationManagers\SubscriptionsRelationManager::class,
             \App\Filament\Resources\ClientResource\RelationManagers\ProjectsRelationManager::class,

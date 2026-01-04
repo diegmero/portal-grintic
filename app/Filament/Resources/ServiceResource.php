@@ -17,13 +17,13 @@ class ServiceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
     
-    protected static ?string $navigationLabel = 'Servicios';
+    protected static ?string $navigationLabel = 'Catálogo';
     
     protected static ?string $modelLabel = 'Servicio';
     
     protected static ?string $pluralModelLabel = 'Servicios';
     
-    protected static ?string $navigationGroup = 'Catálogo';
+    protected static ?string $navigationGroup = 'Servicios';
     
     protected static ?int $navigationSort = 10;
 

@@ -58,12 +58,10 @@ class ContactsRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
-                    ->searchable(),
+                    ->label('Nombre'),
                 
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
-                    ->searchable()
                     ->copyable(),
                 
                 Tables\Columns\TextColumn::make('phone')

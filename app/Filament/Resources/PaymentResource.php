@@ -23,11 +23,11 @@ class PaymentResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Pagos';
     
-    protected static ?string $navigationGroup = 'Gestión Financiera';
+    protected static ?string $navigationGroup = 'Facturación';
     
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
-    protected static ?int $navigationSort = 23;
+    protected static ?int $navigationSort = 21;
 
     public static function form(Form $form): Form
     {
@@ -41,6 +41,7 @@ class PaymentResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
+                            ->disabled()
                             ->columnSpan('full'),
                         
                         Forms\Components\TextInput::make('amount')
@@ -48,31 +49,37 @@ class PaymentResource extends Resource
                             ->numeric()
                             ->required()
                             ->prefix('$')
-                            ->minValue(0.01),
+                            ->minValue(0.01)
+                            ->disabled(),
                         
                         Forms\Components\DatePicker::make('payment_date')
                             ->label('Fecha de Pago')
                             ->default(now())
                             ->required()
-                            ->maxDate(now()),
+                            ->maxDate(now())
+                            ->disabled(),
                         
                         Forms\Components\Select::make('payment_method')
                             ->label('Método de Pago')
                             ->options(PaymentMethod::class)
-                            ->required(),
+                            ->required()
+                            ->disabled(),
                         
                         Forms\Components\TextInput::make('transaction_reference')
                             ->label('Referencia/Nº Transacción')
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->disabled(),
                         
                         Forms\Components\FileUpload::make('attachment_path')
                             ->label('Comprobante de Pago')
+                            ->disabled()
                             ->columnSpan('full'),
                         
                         Forms\Components\Textarea::make('notes')
                             ->label('Notas')
                             ->rows(3)
-                            ->columnSpan('full'),
+                            ->columnSpan('full')
+                            ->helperText('Este es el único campo editable'),
                     ])
                     ->columns(2),
             ]);
@@ -148,12 +155,6 @@ class PaymentResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ])
             ->defaultSort('payment_date', 'desc');
     }

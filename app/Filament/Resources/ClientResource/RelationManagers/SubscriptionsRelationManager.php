@@ -74,8 +74,7 @@ class SubscriptionsRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('service.name')
-                    ->label('Servicio')
-                    ->searchable(),
+                    ->label('Servicio'),
                 
                 Tables\Columns\TextColumn::make('custom_price')
                     ->label('Precio')

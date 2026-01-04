@@ -28,7 +28,7 @@ class InvoiceResource extends Resource
     
     protected static ?string $navigationGroup = 'Facturación';
     
-    protected static ?int $navigationSort = 22;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Form $form): Form
     {

@@ -31,6 +31,7 @@ class PaymentsRelationManager extends RelationManager
                     ->required()
                     ->prefix('$')
                     ->minValue(0.01)
+                    ->disabled()
                     ->maxValue(function ($record) {
                         $invoice = $this->getOwnerRecord();
                         $alreadyPaid = $invoice->payments()
@@ -44,27 +45,32 @@ class PaymentsRelationManager extends RelationManager
                     ->label('Fecha de Pago')
                     ->default(now())
                     ->required()
-                    ->maxDate(now()),
+                    ->maxDate(now())
+                    ->disabled(),
                 
                 Forms\Components\Select::make('payment_method')
                     ->label('Método de Pago')
                     ->options(PaymentMethod::class)
-                    ->required(),
+                    ->required()
+                    ->disabled(),
                 
                 Forms\Components\TextInput::make('transaction_reference')
                     ->label('Referencia/Nº Transacción')
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->disabled(),
                 
                 Forms\Components\FileUpload::make('attachment_path')
                     ->label('Comprobante')
                     ->directory('payments')
                     ->visibility('private')
-                    ->acceptedFileTypes(['image/*', 'application/pdf']),
+                    ->acceptedFileTypes(['image/*', 'application/pdf'])
+                    ->disabled(),
                 
                 Forms\Components\Textarea::make('notes')
                     ->label('Notas')
                     ->rows(3)
-                    ->columnSpan('full'),
+                    ->columnSpan('full')
+                    ->helperText('Este es el único campo editable'),
             ])
             ->columns(2);
     }
@@ -129,20 +135,6 @@ class PaymentsRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
-                    ->after(function () {
-                        $this->getOwnerRecord()->calculateTotals();
-                        $this->dispatch('$refresh');
-                    }),
-                Tables\Actions\DeleteAction::make()
-                    ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
-                    ->after(function () {
-                        $this->getOwnerRecord()->calculateTotals();
-                        $this->dispatch('$refresh');
-                    }),
-            ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make()
                     ->visible(fn () => $this->getOwnerRecord()->status !== \App\Enums\InvoiceStatus::PAID)
                     ->after(function () {
                         $this->getOwnerRecord()->calculateTotals();

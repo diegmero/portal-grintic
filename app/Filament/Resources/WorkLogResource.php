@@ -19,15 +19,15 @@ class WorkLogResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
     
-    protected static ?string $navigationLabel = 'Registro de Horas';
+    protected static ?string $navigationLabel = 'Soporte - Horas';
     
-    protected static ?string $modelLabel = 'Registro de Horas';
+    protected static ?string $modelLabel = 'Soporte - Horas';
     
-    protected static ?string $pluralModelLabel = 'Registros de Horas';
+    protected static ?string $pluralModelLabel = 'Soporte - Horas';
     
-    protected static ?string $navigationGroup = 'Facturación';
+    protected static ?string $navigationGroup = 'Servicios';
     
-    protected static ?int $navigationSort = 21;
+    protected static ?int $navigationSort = 12;
 
     public static function form(Form $form): Form
     {
@@ -183,7 +183,7 @@ class WorkLogResource extends Resource
                     ->label('Descripción')
                     ->limit(40)
                     ->tooltip(fn ($record) => $record->description)
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('client')
