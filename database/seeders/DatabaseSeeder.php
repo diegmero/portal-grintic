@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Create admin user from .env
+        $this->call(AdminUserSeeder::class);
         // Crear servicios básicos
         $servicioMantenimiento = Service::create([
             'name' => 'Mantenimiento Web Estándar',
