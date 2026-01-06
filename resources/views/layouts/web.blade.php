@@ -26,12 +26,7 @@
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             {{-- Logo --}}
             <a href="/" class="flex items-center gap-2.5 group">
-                <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-                <span class="font-heading font-bold text-white tracking-tight">{{ config('app.name') }}</span>
+                <img src="https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png" alt="{{ config('app.name') }}" class="h-8 w-auto brightness-0 invert" />
             </a>
 
             {{-- Desktop Nav --}}
@@ -86,14 +81,9 @@
             <div class="grid grid-cols-1 md:grid-cols-5 gap-12 mb-12">
                 {{-- Brand --}}
                 <div class="md:col-span-2">
-                    <div class="flex items-center gap-2.5 mb-4">
-                        <div class="w-8 h-8 rounded-lg bg-[#0a84b4] flex items-center justify-center">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
-                        <span class="font-heading font-bold text-white text-lg">{{ config('app.name') }}</span>
-                    </div>
+                    <a href="/" class="flex items-center gap-2.5 mb-4">
+                        <img src="https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png" alt="{{ config('app.name') }}" class="h-10 w-auto brightness-0 invert" />
+                    </a>
                     <p class="text-slate-400 text-sm leading-relaxed max-w-md">
                         Simplificamos la tecnología de tu empresa. Gestión integral de TI, desarrollo de software y soluciones cloud diseñadas para escalar contigo.
                     </p>
