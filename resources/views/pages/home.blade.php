@@ -1,9 +1,6 @@
 @extends('layouts.web')
 
 @section('title', 'Soluciones TI para Empresas en Colombia')
-@section('meta_title', 'GrinTic — Soluciones TI para Empresas en Colombia')
-@section('meta_description', 'Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad. Simplificamos la tecnología de tu empresa con +50 proyectos completados.')
-@section('meta_keywords', 'servicios TI Colombia, desarrollo software empresarial, infraestructura cloud AWS Azure, soporte técnico empresas, ciberseguridad corporativa, consultoría TI')
 
 @push('styles')
 <style>

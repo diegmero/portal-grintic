@@ -1,9 +1,6 @@
 @extends('layouts.web')
 
 @section('title', 'Servicios de TI para Empresas')
-@section('meta_title', 'Servicios TI — Infraestructura, Desarrollo y Ciberseguridad | GrinTic')
-@section('meta_description', 'Servicios de infraestructura cloud, desarrollo de software a medida, ciberseguridad, soporte técnico y consultoría TI para empresas en Colombia. Precios competitivos.')
-@section('meta_keywords', 'servicios TI empresas, infraestructura cloud Colombia, desarrollo software personalizado, ciberseguridad empresarial, soporte técnico')
 
 @section('content')
     {{-- Hero --}}
