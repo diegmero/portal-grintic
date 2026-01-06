@@ -3,9 +3,11 @@
 use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Public Website Routes
+Route::get('/', fn() => view('pages.home'))->name('home');
+Route::get('/servicios', fn() => view('pages.servicios'))->name('servicios');
+Route::get('/nosotros', fn() => view('pages.nosotros'))->name('nosotros');
+Route::get('/contacto', fn() => view('pages.contacto'))->name('contacto');
 
 // Rutas protegidas para archivos
 // Rutas protegidas para archivos (Admins y Clientes)

@@ -1,87 +1,41 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Laravel') }} — Soluciones Digitales</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        /* Animated gradient background - Light version */
-        .hero-gradient {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        .hero-gradient::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 40%),
-                        radial-gradient(circle at 90% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 30%);
-            animation: pulse 8s ease-in-out infinite alternate;
-        }
-        @keyframes pulse {
-            0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-            100% { transform: translate(2%, -2%) scale(1.05); opacity: 1; }
-        }
-        /* Text gradient */
-        .text-gradient {
-            background: linear-gradient(135deg, #1ea1d4ff 0%, #0a84b4ff 50%, #045d80ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        /* Grid lines effect - subtle for light */
-        .grid-lines {
-            background-image: 
-                linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
-            background-size: 60px 60px;
-        }
-    </style>
-</head>
-<body class="font-sans antialiased bg-white text-slate-600">
+@extends('layouts.web')
 
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    {{-- HEADER --}}
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    <header class="fixed w-full top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            {{-- Logo --}}
-            <a href="/" class="flex items-center gap-2.5 group">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1ea1d4] to-[#045d80] flex items-center justify-center shadow-lg shadow-[#0a84b4]/20">
-                    <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-                <span class="font-heading font-bold text-slate-800 tracking-tight">{{ config('app.name') }}</span>
-            </a>
+@section('title', 'Inicio')
 
-            {{-- Nav --}}
-            <nav class="hidden md:flex items-center gap-1">
-                <a href="#services" class="px-4 py-2 text-sm text-slate-500 hover:text-slate-900 transition-colors rounded-lg hover:bg-slate-50">Servicios</a>
-                <a href="#about" class="px-4 py-2 text-sm text-slate-500 hover:text-slate-900 transition-colors rounded-lg hover:bg-slate-50">Nosotros</a>
-                <a href="#contact" class="px-4 py-2 text-sm text-slate-500 hover:text-slate-900 transition-colors rounded-lg hover:bg-slate-50">Contacto</a>
-                
-                <div class="w-px h-5 bg-slate-200 mx-3"></div>
-                
-                <a href="/portal/login" class="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">Acceder</a>
-                <a href="#contact" class="ml-2 px-5 py-2 text-sm font-medium text-white bg-[#0a84b4] hover:bg-[#1ea1d4] rounded-lg transition-all hover:shadow-lg hover:shadow-[#0a84b4]/25">
-                    Empezar
-                </a>
-            </nav>
-        </div>
-    </header>
+@push('styles')
+<style>
+    .hero-gradient {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-gradient::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 30% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 30%);
+        animation: pulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes pulse {
+        0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+        100% { transform: translate(2%, -2%) scale(1.05); opacity: 1; }
+    }
+    .grid-lines {
+        background-image: 
+            linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+        background-size: 60px 60px;
+    }
+</style>
+@endpush
 
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    {{-- HERO --}}
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
+@section('content')
+    {{-- Hero --}}
     <section class="hero-gradient grid-lines min-h-screen flex items-center justify-center relative">
         <div class="max-w-5xl mx-auto px-6 pt-24 pb-32 text-center relative z-10">
             
@@ -113,35 +67,31 @@
                     </svg>
                     <span>Contactar Ahora</span>
                 </a>
-                <a href="#services" class="w-full sm:w-auto px-8 py-4 text-slate-200 bg-[#0a84b4] font-semibold rounded-xl border border-slate-200 hover:border-[#0a84b4] hover:text-[#0a84b4] hover:bg-[#0a84b4]/10 transition-all flex items-center justify-center gap-2 group">
+                <a href="{{ route('servicios') }}" class="w-full sm:w-auto px-8 py-4 text-white bg-[#0a84b4] font-semibold rounded-xl border border-[#0a84b4] hover:bg-[#0a84b4]/10 hover:text-[#0a84b4] transition-all flex items-center justify-center gap-2 group">
                     <span>Ver Servicios</span>
-                    <svg class="w-4 h-4 text-slate-200 hover:text-[#0a84b4] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                 </a>
             </div>
 
             {{-- Social Proof --}}
-            <div class="mt-16 pt-10 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-slate-400">
+            <div class="mt-16 pt-10 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-slate-400">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    <span class="text-slate-500">+50 empresas confían en nosotros</span>
+                    <span class="text-slate-500">+50 Proyectos Completados</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    <span class="text-slate-500">Datos 100% seguros</span>
+                    <span class="text-slate-500">Priorizamos Seguridad</span>
                 </div>
             </div>
         </div>
         
-        {{-- Gradient fade to content --}}
         <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent"></div>
     </section>
 
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    {{-- SERVICES - BENTO GRID --}}
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    <section id="services" class="py-24 bg-white">
+    {{-- Services Bento Grid --}}
+    <section class="py-10 bg-white">
         <div class="max-w-7xl mx-auto px-6">
-            
             <div class="text-center mb-16">
                 <span class="text-[#0a84b4] font-semibold text-sm uppercase tracking-wider">Nuestros Servicios</span>
                 <h2 class="font-heading text-4xl md:text-5xl font-bold text-slate-900 mt-4">
@@ -224,35 +174,4 @@
             </div>
         </div>
     </section>
-
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    {{-- FOOTER --}}
-    {{-- ═══════════════════════════════════════════════════════════════ --}}
-    <footer class="bg-slate-50 border-t border-slate-200 py-12">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-md bg-gradient-to-br from-[#1ea1d4] to-[#045d80] flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-                <span class="font-heading font-bold text-slate-800 text-sm">{{ config('app.name') }}</span>
-            </div>
-            
-            <p class="text-slate-400 text-sm">
-                &copy; {{ date('Y') }} {{ config('app.name') }}. Todos los derechos reservados.
-            </p>
-            
-            <div class="flex items-center gap-4">
-                <a href="#" class="text-slate-400 hover:text-[#0a84b4] transition-colors">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
-                </a>
-                <a href="#" class="text-slate-400 hover:text-[#0a84b4] transition-colors">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-                </a>
-            </div>
-        </div>
-    </footer>
-
-</body>
-</html>
+@endsection
