@@ -1,6 +1,9 @@
 @extends('layouts.web')
 
-@section('title', 'Nosotros')
+@section('title', 'Quiénes Somos')
+@section('meta_title', 'Sobre Nosotros — Equipo de Expertos TI en Colombia | GrinTic')
+@section('meta_description', 'Conoce al equipo de GrinTic. +50 clientes activos, 99.9% uptime garantizado. Expertos en TI comprometidos con el éxito de tu empresa en Colombia.')
+@section('meta_keywords', 'equipo TI Colombia, empresa tecnología, expertos infraestructura, consultores TI, GrinTic equipo')
 
 @section('content')
     {{-- Hero --}}

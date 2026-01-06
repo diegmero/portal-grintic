@@ -1,6 +1,9 @@
 @extends('layouts.web')
 
 @section('title', 'Contacto')
+@section('meta_title', 'Contacto — Habla con Nuestro Equipo TI | GrinTic')
+@section('meta_description', 'Contáctanos por WhatsApp o email. Respuesta rápida para consultas sobre servicios TI, cotizaciones y soporte técnico. +57 316 550 4399.')
+@section('meta_keywords', 'contacto GrinTic, cotización servicios TI, soporte técnico Colombia, consulta infraestructura cloud')
 
 @section('content')
     {{-- Hero --}}
