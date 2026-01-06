@@ -6,9 +6,9 @@
     
     {{-- Primary Meta Tags --}}
     <title>@yield('title', 'Soluciones TI para Empresas') — {{ config('app.name') }}</title>
-    <meta name="title" content="@yield('meta_title', 'GrinTic — Soluciones TI para Empresas')">
-    <meta name="description" content="@yield('meta_description', 'Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad para empresas en Colombia. Simplificamos tu tecnología.')">
-    <meta name="keywords" content="@yield('meta_keywords', 'servicios TI Colombia, desarrollo software, infraestructura cloud, soporte técnico empresarial, ciberseguridad, gestión TI, soluciones tecnológicas')">
+    <meta name="title" content="GrinTic — Soluciones TI para Empresas en Colombia">
+    <meta name="description" content="Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad para empresas en Colombia. Simplificamos tu tecnología.">
+    <meta name="keywords" content="servicios TI Colombia, desarrollo software, infraestructura cloud, soporte técnico empresarial, ciberseguridad, gestión TI, soluciones tecnológicas">
     <meta name="author" content="{{ config('app.name') }}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url()->current() }}">
@@ -16,18 +16,18 @@
     {{-- Open Graph / Facebook --}}
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="@yield('meta_title', 'GrinTic — Soluciones TI para Empresas')">
-    <meta property="og:description" content="@yield('meta_description', 'Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad para empresas en Colombia.')">
-    <meta property="og:image" content="@yield('og_image', 'https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png')">
+    <meta property="og:title" content="GrinTic — Soluciones TI para Empresas en Colombia">
+    <meta property="og:description" content="Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad para empresas en Colombia.">
+    <meta property="og:image" content="https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png">
     <meta property="og:site_name" content="{{ config('app.name') }}">
     <meta property="og:locale" content="es_CO">
     
     {{-- Twitter Cards --}}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ url()->current() }}">
-    <meta name="twitter:title" content="@yield('meta_title', 'GrinTic — Soluciones TI para Empresas')">
-    <meta name="twitter:description" content="@yield('meta_description', 'Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad para empresas en Colombia.')">
-    <meta name="twitter:image" content="@yield('og_image', 'https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png')">
+    <meta name="twitter:title" content="GrinTic — Soluciones TI para Empresas en Colombia">
+    <meta name="twitter:description" content="Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad para empresas en Colombia.">
+    <meta name="twitter:image" content="https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png">
     
     {{-- Favicon --}}
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png">
@@ -123,8 +123,6 @@
         }
     }
     </script>
-    
-    @stack('seo')
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
