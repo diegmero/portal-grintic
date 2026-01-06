@@ -38,6 +38,92 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://res.cloudinary.com">
+
+    {{-- JSON-LD Structured Data for Organization --}}
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "Organization",
+        "name": "{{ config('app.name') }}",
+        "url": "https://grintic.com",
+        "logo": "https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png",
+        "description": "Gestión integral de TI, desarrollo de software a medida, infraestructura cloud y ciberseguridad para empresas en Colombia.",
+        "address": {
+            "@@type": "PostalAddress",
+            "addressCountry": "CO"
+        },
+        "contactPoint": {
+            "@@type": "ContactPoint",
+            "telephone": "+57-316-550-4399",
+            "contactType": "customer service",
+            "email": "clientes@grintic.com",
+            "availableLanguage": ["Spanish"]
+        },
+        "sameAs": []
+    }
+    </script>
+    
+    {{-- JSON-LD for Local Business --}}
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "ProfessionalService",
+        "name": "{{ config('app.name') }}",
+        "image": "https://res.cloudinary.com/dspoaxmvn/image/upload/v1751086807/gr_emkc51.png",
+        "url": "https://grintic.com",
+        "telephone": "+57-316-550-4399",
+        "email": "clientes@grintic.com",
+        "priceRange": "$$",
+        "address": {
+            "@@type": "PostalAddress",
+            "addressCountry": "CO"
+        },
+        "openingHoursSpecification": {
+            "@@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            "opens": "08:00",
+            "closes": "18:00"
+        },
+        "areaServed": {
+            "@@type": "Country",
+            "name": "Colombia"
+        },
+        "hasOfferCatalog": {
+            "@@type": "OfferCatalog",
+            "name": "Servicios de TI",
+            "itemListElement": [
+                {
+                    "@@type": "Offer",
+                    "itemOffered": {
+                        "@@type": "Service",
+                        "name": "Infraestructura & Cloud"
+                    }
+                },
+                {
+                    "@@type": "Offer",
+                    "itemOffered": {
+                        "@@type": "Service",
+                        "name": "Desarrollo de Software a Medida"
+                    }
+                },
+                {
+                    "@@type": "Offer",
+                    "itemOffered": {
+                        "@@type": "Service",
+                        "name": "Ciberseguridad"
+                    }
+                },
+                {
+                    "@@type": "Offer",
+                    "itemOffered": {
+                        "@@type": "Service",
+                        "name": "Soporte Técnico"
+                    }
+                }
+            ]
+        }
+    }
+    </script>
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
