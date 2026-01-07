@@ -57,9 +57,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->plugins([
-                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
-            ])
             ->navigationGroups([
                 'CRM',
                 'Servicios',
@@ -67,9 +64,14 @@ class AdminPanelProvider extends PanelProvider
                 'Configuración',
             ]);
 
-        // Enable registration only when no users exist
+        // Enable registration only when no users exist (first setup)
         if (User::count() === 0) {
             $panel->registration(\App\Filament\Pages\Auth\Register::class);
+        } else {
+            // Only enable FilamentShield after first user exists
+            $panel->plugins([
+                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
+            ]);
         }
 
         return $panel;
