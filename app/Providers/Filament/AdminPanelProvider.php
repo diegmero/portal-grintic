@@ -23,12 +23,11 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        $panel = $panel
             ->default()
             ->id('admin')
             ->path('admin')
             ->login()
-            ->registration(fn () => User::count() === 0)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -67,5 +66,12 @@ class AdminPanelProvider extends PanelProvider
                 'Facturación',
                 'Configuración',
             ]);
+
+        // Enable registration only when no users exist
+        if (User::count() === 0) {
+            $panel->registration();
+        }
+
+        return $panel;
     }
 }
