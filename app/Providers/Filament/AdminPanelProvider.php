@@ -69,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
 
         // Enable registration only when no users exist
         if (User::count() === 0) {
-            $panel->registration();
+            $panel->registration(\App\Filament\Pages\Auth\Register::class);
         }
 
         return $panel;
