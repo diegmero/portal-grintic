@@ -16,6 +16,13 @@ class FixAdminUser extends Command
     {
         $email = $this->argument('email');
         
+        // Debug: show all users
+        $allUsers = User::all(['id', 'email']);
+        $this->info("Found " . $allUsers->count() . " users in database:");
+        foreach ($allUsers as $u) {
+            $this->line("  - [{$u->id}] {$u->email}");
+        }
+        
         $user = User::where('email', $email)->first();
         
         if (!$user) {
