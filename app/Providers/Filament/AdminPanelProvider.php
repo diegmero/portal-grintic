@@ -18,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Spatie\Permission\Models\Permission;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -67,8 +68,11 @@ class AdminPanelProvider extends PanelProvider
         // Enable registration only when no users exist (first setup)
         if (User::count() === 0) {
             $panel->registration(\App\Filament\Pages\Auth\Register::class);
-        } else {
-            // Only enable FilamentShield after first user exists
+        }
+
+        // Only enable FilamentShield if permissions have been generated
+        // (run php artisan shield:generate --all after first login)
+        if (Permission::count() > 0) {
             $panel->plugins([
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
             ]);
@@ -77,3 +81,4 @@ class AdminPanelProvider extends PanelProvider
         return $panel;
     }
 }
+
