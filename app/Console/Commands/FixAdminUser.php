@@ -25,9 +25,25 @@ class FixAdminUser extends Command
         
         $user = User::where('email', $email)->first();
         
+        // If not found, try with quotes (Plesk bug)
+        if (!$user) {
+            $user = User::where('email', '"' . $email . '"')->first();
+            if ($user) {
+                // Fix the email by removing quotes
+                $user->email = $email;
+                $this->info("🔧 Fixed email (removed quotes)");
+            }
+        }
+        
         if (!$user) {
             $this->error("User with email {$email} not found!");
             return 1;
+        }
+
+        // Fix name if it has quotes
+        if (str_starts_with($user->name, '"') && str_ends_with($user->name, '"')) {
+            $user->name = trim($user->name, '"');
+            $this->info("🔧 Fixed name (removed quotes)");
         }
 
         // Verify email
