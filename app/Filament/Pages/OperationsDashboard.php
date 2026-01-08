@@ -10,6 +10,8 @@ class OperationsDashboard extends Page
     protected static ?string $navigationLabel = 'Centro de Operaciones';
     protected static ?string $title = 'Centro de Operaciones';
 
+    protected static string $view = 'filament.pages.operations-dashboard';
+
     public function getWidgets(): array
     {
         return [
